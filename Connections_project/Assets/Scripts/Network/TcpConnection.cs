@@ -21,13 +21,13 @@ public class TcpConnection
 
 	object handler = new object();
 
-	public TcpConnection(IPAddress ip, int port, IReceiveData receiver = null)
+	public void StartServer(IPAddress ip, int port, IReceiveData receiver = null)
 	{
 		try
 		{
 			serverSocket = new Socket(
 				AddressFamily.InterNetwork,
-				SocketType.Stream, 
+				SocketType.Stream,
 				ProtocolType.Tcp
 			);
 
@@ -41,6 +41,11 @@ public class TcpConnection
 		{
 			UnityEngine.Debug.Log("Error: " + e.StackTrace);
 		}
+	}
+
+	public void StartClient()
+	{
+
 	}
 
 	private void OnAccept(IAsyncResult ar)
@@ -68,6 +73,28 @@ public class TcpConnection
 
 	private void OnRecieve(IAsyncResult ar)
 	{
+		try 
+		{
+			DataReceived dataReceived = new DataReceived();
+			clientSocket.EndReceive(ar);
+			
+			lock (handler)
+			{
+				dataReceivedQueue.Enqueue(dataReceived);
+			}
 
+			clientSocket.BeginReceive(
+				dataReceived.data,
+				0,
+				dataReceived.data.Length,
+				SocketFlags.None,
+				new AsyncCallback(OnRecieve),
+				clientSocket
+			);
+		}
+		catch(SocketException e)
+		{
+			UnityEngine.Debug.LogError("TCP_Connection: " + e.Message);
+		}
 	}
 }

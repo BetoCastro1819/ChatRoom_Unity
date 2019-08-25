@@ -40,7 +40,7 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
     public Action<byte[], IPEndPoint> OnReceiveEvent;
 
     private UdpConnection connection;
-	private TcpConnection tcpServer;
+	private TcpConnection tcpConnection;
 
 	private readonly Dictionary<int, Client> clients = new Dictionary<int, Client>();
     private readonly Dictionary<IPEndPoint, int> ipToId = new Dictionary<IPEndPoint, int>();
@@ -49,7 +49,8 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
     
 	public void StartTcpServer(IPAddress ip, int port)
 	{
-		tcpServer = new TcpConnection(ip, port); 
+		tcpConnection = new TcpConnection();
+		tcpConnection.StartServer(ip, port);
 	}
 
     public void StartServer(int port)

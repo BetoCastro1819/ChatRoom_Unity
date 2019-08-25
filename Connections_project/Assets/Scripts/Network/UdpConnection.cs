@@ -10,7 +10,7 @@ public class UdpConnection
         public byte[] data;
         public IPEndPoint ipEndPoint;
     }
-
+	
     private readonly UdpClient connection;
     private IReceiveData receiver = null;
     private Queue<DataReceived> dataReceivedQueue = new Queue<DataReceived>();
