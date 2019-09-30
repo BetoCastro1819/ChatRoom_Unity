@@ -90,8 +90,7 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
             ipToId[ip] = clientId;
             
             clients.Add(clientId, new Client(ip, id, Time.realtimeSinceStartup));
-
-            clientId ++;
+            clientId++;
         }
     }
 
@@ -122,9 +121,7 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
         using (var iterator = clients.GetEnumerator())
         {
             while (iterator.MoveNext())
-            {
                 connection.Send(data, iterator.Current.Value.ipEndPoint);
-            }
         }
     }
 

@@ -1,0 +1,24 @@
+PacketApuntes de multijugador:
+
+Del lado de C#:
+- UdpClient
+
+Del lado de nuestra librearia de Networking:
+- UdpConnection
+- NetworkManager (Clase intermedia que se encarga de llamar al flush de udpConnection, y desencolar los mensajes desde el thread de unity)
+- PacketManager (Recibe y manda packetes, genera los headers en base al PacketType, y lo vuelve a enviar al NetworkManager; serializa y deserializa los packetes)
+- PacketHeader (el header del paquete se define en base al PacketType)
+- UserPacketHeader
+- Packet
+- ConnectionManager (Se encarga del handshake, maneja conexiones y maneja la lista de clientes)
+
+Handshake:
+- Cliente manda ConnectionRequest junto con el clientSalt (multiples intentos manda el mismo clientSlat igual).
+- el servidor le manda el clientSalt (para checkear que lo recibio bien), el ID de cliente, manda el ChallengeRequest, y tambien genera el serverSalt (cada cliente tiene su propio serverSalt.
+- El cliente responde con el ChallengeResponse y el result (XOR entre clientSalt y serverSalt). Si el Result es correcto, el cliente se Conecta al server (paso 4). 
+
+PacketTypes: ConnectionRequest, ChallengeRequest, ChallengeResponse, Connected, User (todos los paquetes del lado del juego)
+
+Del lado del Juego:
+- GamePacket (hereda de Packet) -> tendria la informacion necesaria para el juego (Ej.: posicion de los personajes)
+- MessageManager (crea objetos de tipo GamePacket)
