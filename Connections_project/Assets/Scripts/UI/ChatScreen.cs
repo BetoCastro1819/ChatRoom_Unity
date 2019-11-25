@@ -45,6 +45,10 @@ public class ChatScreen : MonoBehaviourSingleton<ChatScreen>
 				TextPacket textPacket = new TextPacket();
 				textPacket.Deserialize(stream);
 				messages.text += textPacket.payload + System.Environment.NewLine;
+
+				if (NetworkManager.Instance.isServer)
+					PacketManager.Instance.SendPacket(textPacket, objectID);
+
 				break;
 		}
     }
@@ -58,27 +62,12 @@ public class ChatScreen : MonoBehaviourSingleton<ChatScreen>
 
 			PacketManager.Instance.SendPacket(textPacket, objectID);
 
-			Debug.Log("Sending text packet to PacketManager");
-
-			if (NetworkManager.Instance.isServer)
-				messages.text += inputMessage.text + System.Environment.NewLine;
-		
-          //if (NetworkManager.Instance.isServer)
-            //{
-//
-            //    NetworkManager.Instance.Broadcast(System.Text.ASCIIEncoding.UTF8.GetBytes(inputMessage.text));
-            //    messages.text += inputMessage.text + System.Environment.NewLine;
-            //}
-            //else
-            //{
-            //    NetworkManager.Instance.SendToServer(System.Text.ASCIIEncoding.UTF8.GetBytes(inputMessage.text));
-            //}            
+          	if (NetworkManager.Instance.isServer)
+            	messages.text += inputMessage.text + System.Environment.NewLine;
 
             inputMessage.ActivateInputField();
             inputMessage.Select();        
             inputMessage.text = "";
         }
-
     }
-
 }
