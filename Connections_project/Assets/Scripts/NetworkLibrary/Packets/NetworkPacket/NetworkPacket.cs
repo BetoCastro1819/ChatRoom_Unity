@@ -10,23 +10,6 @@ public enum PacketType
 	User
 }
 
-public class PacketHeader : ISerialzablePacket
-{
-	public uint packetTypeID;
-
-	public void Serialize(Stream stream)
-	{
-		BinaryWriter binaryWriter = new BinaryWriter(stream);
-		binaryWriter.Write(packetTypeID);
-	}
-
-	public void Deserialize(Stream stream)
-	{
-		BinaryReader binaryReader = new BinaryReader(stream);
-		packetTypeID = binaryReader.ReadUInt32();
-	}
-}
-
 public abstract class NetworkPacket<T> : ISerialzablePacket
 {
     public PacketType type;

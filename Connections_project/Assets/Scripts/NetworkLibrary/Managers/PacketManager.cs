@@ -28,7 +28,7 @@ public class PacketManager : MonoBehaviourSingleton<PacketManager>, IReceiveData
 
 	public void SendPacket<T>(NetworkPacket<T> packetToSend, uint objectID = 0)
 	{
-		Debug.Log(gameObject + "Sending packet");
+		//Debug.Log(gameObject + "Sending packet");
 
 		byte[] packetData = SerializePacket(packetToSend, objectID);
 
@@ -93,8 +93,6 @@ public class PacketManager : MonoBehaviourSingleton<PacketManager>, IReceiveData
 
 	public void InvokeCallback(UserPacketHeader packetHeader, Stream stream)
 	{
-		Debug.Log("InvokeCallback");
-		
 		if (onPacketReceived.ContainsKey(packetHeader.objectID))
 		{
 			onPacketReceived[packetHeader.objectID].Invoke(
