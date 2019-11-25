@@ -39,10 +39,7 @@ public class ChatScreen : MonoBehaviourSingleton<ChatScreen>
     {
         if (inputMessage.text != "")
         {
-			TextPacket textPacket = new TextPacket();
-			textPacket.payload = inputMessage.text;
-
-			PacketManager.Instance.SendPacket(textPacket, objectID);
+            NetworkMessageManager.Instance.SendTextMessage(inputMessage.text, objectID);
 
           	if (NetworkManager.Instance.isServer)
             	messages.text += inputMessage.text + System.Environment.NewLine;
