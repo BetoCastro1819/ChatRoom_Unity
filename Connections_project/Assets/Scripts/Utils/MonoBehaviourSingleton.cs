@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class MonoBehaviourSingleton<T> : MonoBehaviour where T : MonoBehaviourSingleton<T>
 {
@@ -21,10 +19,8 @@ public class MonoBehaviourSingleton<T> : MonoBehaviour where T : MonoBehaviourSi
 
     private void Awake()
     {
-        if (instance != null)
-            Destroy(this.gameObject);
-
-        instance = this;
+		if (instance == null) 
+			instance = this;
 
         Initialize();
     }

@@ -1,30 +1,53 @@
 using System.Net;
+using System.IO;
 
 public enum PacketType
 {
-    HandShake,
-    HandShake_OK, 
-    Error,
-    Ping,
-    Pong,
-    Message,
+	ConnectionRequest,
+	ChallengeRequest,
+	ChallengeResponse,
+	ConnectionAccepted,
+	User
 }
 
+public class PacketHeader : ISerialzablePacket
+{
+	public uint packetTypeID;
 
-public class NetworkPacket
+	public void Serialize(Stream stream)
+	{
+		BinaryWriter binaryWriter = new BinaryWriter(stream);
+		binaryWriter.Write(packetTypeID);
+	}
+
+	public void Deserialize(Stream stream)
+	{
+		BinaryReader binaryReader = new BinaryReader(stream);
+		packetTypeID = binaryReader.ReadUInt32();
+	}
+}
+
+public abstract class NetworkPacket<T> : ISerialzablePacket
 {
     public PacketType type;
-    public int clientId;
-    public IPEndPoint ipEndPoint;
-    public float timeStamp;
-    public byte[] payload;
+	public ushort userPacketTypeID;
+	public T payload;
 
-    public NetworkPacket(PacketType type, byte[] data, float timeStamp, int clientId = -1, IPEndPoint ipEndPoint = null)
-    {
-        this.type = type;
-        this.timeStamp = timeStamp;
-        this.clientId = clientId;
-        this.ipEndPoint = ipEndPoint;
-        this.payload = data;
-    }
+	public NetworkPacket(PacketType type)
+	{
+		this.type = type;
+	}
+
+	public virtual void Serialize(Stream stream)
+	{
+		OnSerialize(stream);
+	}
+
+	public virtual void Deserialize(Stream stream)
+	{
+		OnDeserialize(stream);
+	}
+
+	protected abstract void OnSerialize(Stream stream);
+	protected abstract void OnDeserialize(Stream stream);
 }

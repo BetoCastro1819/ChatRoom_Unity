@@ -1,13 +1,30 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using System.IO;
 using UnityEngine.UI;
-using System.Net;
+using UnityEngine;
+
+public class TextPacket : NetworkPacket<string>
+{
+	public TextPacket() : base(PacketType.User) { }
+
+	protected override void OnSerialize (Stream stream)
+	{
+		BinaryWriter binaryWriter = new BinaryWriter(stream);
+		binaryWriter.Write(payload);
+	}
+
+	protected override void OnDeserialize (Stream stream)
+	{
+		BinaryReader binaryReader = new BinaryReader(stream);
+		payload = binaryReader.ReadString();
+	}
+}
+
 
 public class ChatScreen : MonoBehaviourSingleton<ChatScreen>
 {
     public Text messages;
     public InputField inputMessage;
+	public uint objectID = 1;
 
     protected override void Initialize()
     {
@@ -15,32 +32,52 @@ public class ChatScreen : MonoBehaviourSingleton<ChatScreen>
 
         this.gameObject.SetActive(false);
 
-        NetworkManager.Instance.OnReceiveEvent += OnReceiveDataEvent;
+		PacketManager.Instance.AddListener(objectID, OnReceiveDataEvent);
     }
 
-    void OnReceiveDataEvent(byte[] data, IPEndPoint ep)
+    void OnReceiveDataEvent(uint packetID, ushort packetTypeID, Stream stream)
     {
-        if (NetworkManager.Instance.isServer)
-        {
-            NetworkManager.Instance.Broadcast(data);
-        }
+		Debug.Log("On recieve data Event");
 
-        messages.text += System.Text.ASCIIEncoding.UTF8.GetString(data) + System.Environment.NewLine;
+		switch (packetTypeID)
+		{
+			case (ushort)UserPacketType.Text_Message:
+				TextPacket textPacket = new TextPacket();
+				textPacket.Deserialize(stream);
+				messages.text += textPacket.payload + System.Environment.NewLine;
+				break;
+		}
+
+        //if (NetworkManager.Instance.isServer)
+        //    NetworkManager.Instance.Broadcast(data);
+		//
+        //messages.text += System.Text.ASCIIEncoding.UTF8.GetString(data) + System.Environment.NewLine;
     }
 
     void OnEndEdit(string str)
     {
         if (inputMessage.text != "")
         {
-            if (NetworkManager.Instance.isServer)
-            {
-                NetworkManager.Instance.Broadcast(System.Text.ASCIIEncoding.UTF8.GetBytes(inputMessage.text));
-                messages.text += inputMessage.text + System.Environment.NewLine;
-            }
-            else
-            {
-                NetworkManager.Instance.SendToServer(System.Text.ASCIIEncoding.UTF8.GetBytes(inputMessage.text));
-            }            
+			TextPacket textPacket = new TextPacket();
+			textPacket.payload = inputMessage.text;
+
+			PacketManager.Instance.SendPacket(textPacket);
+
+			Debug.Log("Sending text packet to PacketManager");
+
+			if (NetworkManager.Instance.isServer)
+				messages.text += inputMessage.text + System.Environment.NewLine;
+		
+          //if (NetworkManager.Instance.isServer)
+            //{
+//
+            //    NetworkManager.Instance.Broadcast(System.Text.ASCIIEncoding.UTF8.GetBytes(inputMessage.text));
+            //    messages.text += inputMessage.text + System.Environment.NewLine;
+            //}
+            //else
+            //{
+            //    NetworkManager.Instance.SendToServer(System.Text.ASCIIEncoding.UTF8.GetBytes(inputMessage.text));
+            //}            
 
             inputMessage.ActivateInputField();
             inputMessage.Select();        
