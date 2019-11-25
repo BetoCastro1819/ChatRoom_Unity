@@ -61,6 +61,7 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
         isServer = true;
         this.port = port;
         connection = new UdpConnection(port, this);
+		enabled = true;
     }
 
     public void StartClient(IPAddress ip, int port)
@@ -135,7 +136,7 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
     {
         //AddClient(ip);
 
-		Debug.Log("OnReceiveData");
+		//Debug.Log("OnReceiveData");
 
         if (OnReceiveEvent != null)
             OnReceiveEvent.Invoke(data, ip);
@@ -173,7 +174,6 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
 	// Called by the PacketManager
 	public void OnReceivePacket(IPEndPoint iPEndPoint, PacketType packetType, Stream stream)
 	{
-		Debug.Log("Packet received");
 		switch(packetType)
 		{
 			case PacketType.ConnectionRequest:
@@ -198,10 +198,9 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
 				CheckResultForConnection(iPEndPoint, challengeResponsePacket.payload);
 				break;
 			case PacketType.ConnectionAccepted:
-				Debug.Log("OnConnectionAccepted");
-				
 				if (!isServer && clientConnectionState == ClientConnectionState.OnChallengeResponse)
 				{
+					Debug.Log("OnConnectionAccepted");
 					clientConnectionState = ClientConnectionState.OnConnectionAccepted;
 				}
 				break;
@@ -212,7 +211,7 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
 	{
 		if (isServer) 
 		{
-			if (ipToId.ContainsKey(iPEndPoint))
+			if (!ipToId.ContainsKey(iPEndPoint))
 			{
 				Client newClient = new Client(iPEndPoint, clientID++, DateTime.Now.Ticks);
 				newClient.clientSalt = connectionRequestPayload.clientSalt;

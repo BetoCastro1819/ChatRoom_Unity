@@ -47,11 +47,6 @@ public class ChatScreen : MonoBehaviourSingleton<ChatScreen>
 				messages.text += textPacket.payload + System.Environment.NewLine;
 				break;
 		}
-
-        //if (NetworkManager.Instance.isServer)
-        //    NetworkManager.Instance.Broadcast(data);
-		//
-        //messages.text += System.Text.ASCIIEncoding.UTF8.GetString(data) + System.Environment.NewLine;
     }
 
     void OnEndEdit(string str)
@@ -61,7 +56,7 @@ public class ChatScreen : MonoBehaviourSingleton<ChatScreen>
 			TextPacket textPacket = new TextPacket();
 			textPacket.payload = inputMessage.text;
 
-			PacketManager.Instance.SendPacket(textPacket);
+			PacketManager.Instance.SendPacket(textPacket, objectID);
 
 			Debug.Log("Sending text packet to PacketManager");
 

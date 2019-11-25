@@ -43,18 +43,13 @@ public class UdpConnection
 
     public void FlushReceiveData()
     {
-		UnityEngine.Debug.Log("On data received");
-        
 		lock (handler)
         {
             while (dataReceivedQueue.Count > 0)
             {
                 DataReceived dataReceived = dataReceivedQueue.Dequeue();
                 if (receiver != null)
-				{
-					UnityEngine.Debug.Log("On data received");
                     receiver.OnReceiveData(dataReceived.data, dataReceived.ipEndPoint);
-				}
             }
         }
     }
@@ -63,8 +58,6 @@ public class UdpConnection
     {
         try
         {
-			//UnityEngine.Debug.Log("On receiving data");
-
             DataReceived dataReceived = new DataReceived();
             dataReceived.data = connection.EndReceive(ar, ref dataReceived.ipEndPoint);
 

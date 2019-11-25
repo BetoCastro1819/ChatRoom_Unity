@@ -73,8 +73,6 @@ public class PacketManager : MonoBehaviourSingleton<PacketManager>, IReceiveData
 
 	public void OnReceiveData(byte[] data, IPEndPoint iPEndPoint)
 	{
-		Debug.Log("On data received");
-
 		PacketHeader packetHeader = new PacketHeader();
 		MemoryStream memoryStream = new MemoryStream(data);
 
@@ -95,6 +93,8 @@ public class PacketManager : MonoBehaviourSingleton<PacketManager>, IReceiveData
 
 	public void InvokeCallback(UserPacketHeader packetHeader, Stream stream)
 	{
+		Debug.Log("InvokeCallback");
+		
 		if (onPacketReceived.ContainsKey(packetHeader.objectID))
 		{
 			onPacketReceived[packetHeader.objectID].Invoke(
