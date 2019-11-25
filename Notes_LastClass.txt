@@ -1,0 +1,22 @@
+Features a agreagar:
+- Realiable packet
+- Movement prediction
+- Reconciliation
+- Lag compensation
+
+Reconciliation:
+El cliente le avisa al server que se va a mover, el server aplica ese movimiento, pero ya paso un tiempo. 
+Una vez que el cliente recibe ese checkeo por parte del server, el cliente vuelve hacia atras.
+Para evitar esto el server guarda en un pila los inputs que le llegan por parte del cliente en base a FRAMES. 
+El server debe checkear los movientos recibidos contra el frame actual. Y aplica la reconciliacion del movimiento al ultimo frame recibido.
+Usar fixedDeltaTime para asegurar que el server y el cliente corren al mismo frame rate.
+El cliente guarda la pila de inputs, el server la aplica.
+El cliente guarda el resultado del movimiento a realizar (esto es antes del que el cliente realmente este en ese lugar)
+El cliente envia la accion "en este frame me estoy voviendo en X direccion"
+Para cuando el server le responde al cliente, ya pasaron varios frames.
+La reconciliacion se hace si es que el frame y posicion del server no coinciden con la informacion en la cola que tiene 
+guarda el cliente.
+El cliente vuelve a aplicar los mismos inputs que ya le habia mandado al server, para volver a estar sincronizado con el frame y posicion 
+actual que tiene el server
+El input que manda el cliente siempre debe ser RELIABLE, la posicion que duvuelve el servidor, no.
+El input se pide en el update, por mas que los movimientos se apliquen en el fixedUpdate
