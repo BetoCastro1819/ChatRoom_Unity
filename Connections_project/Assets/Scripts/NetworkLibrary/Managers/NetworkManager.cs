@@ -261,7 +261,7 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
 
 	public void SendToClient<T>(NetworkPacket<T> packet, IPEndPoint iPEndPoint)
 	{
-		PacketManager.Instance.SendPacket<T>(packet, iPEndPoint);
+		PacketManager.Instance.SendPacketToClient<T>(packet, iPEndPoint);
 	}
 
 	public void Broadcast(byte[] data)

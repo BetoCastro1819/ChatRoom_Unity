@@ -11,6 +11,7 @@ public class UserPacketHeader : ISerialzablePacket
 	public uint packetID;
 	public uint senderID;
 	public uint objectID;
+	public bool isReliable;
 
 	public void Serialize(Stream stream)
 	{
@@ -20,6 +21,7 @@ public class UserPacketHeader : ISerialzablePacket
 		binaryWriter.Write(packetID);
 		binaryWriter.Write(senderID);
 		binaryWriter.Write(objectID);
+		binaryWriter.Write(isReliable);
 	}
 
 	public void Deserialize(Stream stream)
@@ -30,5 +32,6 @@ public class UserPacketHeader : ISerialzablePacket
 		packetID = binaryReader.ReadUInt32();
 		senderID = binaryReader.ReadUInt32();
 		objectID = binaryReader.ReadUInt32();
+		isReliable = binaryReader.ReadBoolean();
 	}
 }

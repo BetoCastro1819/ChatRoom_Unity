@@ -2,12 +2,17 @@
 using System.IO;
 using System.Net;
 using System;
-using UnityEngine;
 
 public class PacketManager : MonoBehaviourSingleton<PacketManager>, IReceiveData
 {
 	Dictionary<uint, Action<uint, ushort, Stream>> onPacketReceived = new Dictionary<uint, Action<uint, ushort, Stream>>();
-	uint currentPacketID = 0;
+
+
+	uint localSequence = 0;
+	uint remoteSequence = 0;
+	uint ack = 0;
+	uint ackBitfields = 0;
+
 
 	protected override void Initialize()
 	{
@@ -26,11 +31,9 @@ public class PacketManager : MonoBehaviourSingleton<PacketManager>, IReceiveData
 			onPacketReceived.Remove(listenerID);
 	}
 
-	public void SendPacket<T>(NetworkPacket<T> packetToSend, uint objectID = 0)
+	public void SendReliablePacket<T>(NetworkPacket<T> packetToSend, uint objectID = 0)
 	{
-		//Debug.Log(gameObject + "Sending packet");
-
-		byte[] packetData = SerializePacket(packetToSend, objectID);
+		byte[] packetData = SerializePacket(packetToSend, true, objectID);
 
 		if (NetworkManager.Instance.isServer)
 			NetworkManager.Instance.Broadcast(packetData);
@@ -38,13 +41,23 @@ public class PacketManager : MonoBehaviourSingleton<PacketManager>, IReceiveData
 			NetworkManager.Instance.SendToServer(packetData);
 	}
 
-	public void SendPacket<T>(NetworkPacket<T> packetToSend, IPEndPoint iPEndPoint)
+	public void SendPacket<T>(NetworkPacket<T> packetToSend, uint objectID = 0)
 	{
-		byte[] packetData = SerializePacket(packetToSend);
+		byte[] packetData = SerializePacket(packetToSend, false, objectID);
+
+		if (NetworkManager.Instance.isServer)
+			NetworkManager.Instance.Broadcast(packetData);
+		else
+			NetworkManager.Instance.SendToServer(packetData);
+	}
+
+	public void SendPacketToClient<T>(NetworkPacket<T> packetToSend, IPEndPoint iPEndPoint, bool isReliable = false)
+	{
+		byte[] packetData = SerializePacket(packetToSend, isReliable);
 		NetworkManager.Instance.SendToClient(packetData, iPEndPoint);
 	}
 
-	public byte[] SerializePacket<T>(NetworkPacket<T> packetToSerialize, uint objectID = 0) // ReliablePacketHeader packetHeader = null
+	public byte[] SerializePacket<T>(NetworkPacket<T> packetToSerialize, bool isReliable = false, uint objectID = 0)
 	{
 		MemoryStream memoryStream = new MemoryStream();
 		PacketHeader packetHeader = new PacketHeader();
@@ -57,11 +70,23 @@ public class PacketManager : MonoBehaviourSingleton<PacketManager>, IReceiveData
 			UserPacketHeader userPacketHeader = new UserPacketHeader();
 
 			userPacketHeader.packetTypeID = packetToSerialize.userPacketTypeID;
-			userPacketHeader.packetID = currentPacketID++;
+			userPacketHeader.packetID = localSequence++;
 			userPacketHeader.senderID = NetworkManager.Instance.clientID;
 			userPacketHeader.objectID = objectID;
+			userPacketHeader.isReliable = isReliable;
 
 			userPacketHeader.Serialize(memoryStream);
+
+			if (isReliable)
+			{
+				ReliablePacketHeader reliablePacketHeader = new ReliablePacketHeader();
+
+				reliablePacketHeader.sequence = localSequence;
+				reliablePacketHeader.ack = ack;
+				reliablePacketHeader.ackBitfield = ackBitfields;
+
+				reliablePacketHeader.Serialize(memoryStream);
+			}
 		}
 
 		packetToSerialize.Serialize(memoryStream);
@@ -82,6 +107,13 @@ public class PacketManager : MonoBehaviourSingleton<PacketManager>, IReceiveData
 		{
 			UserPacketHeader userPacketHeader = new UserPacketHeader();
 			userPacketHeader.Deserialize(memoryStream);
+
+			if (userPacketHeader.isReliable)
+			{
+				ReliablePacketHeader reliablePacketHeader = new ReliablePacketHeader();
+				reliablePacketHeader.Deserialize(memoryStream);
+			}	
+
 			InvokeCallback(userPacketHeader, memoryStream);
 		}
 		else
