@@ -6,7 +6,7 @@ using System;
 public class PacketManager : MonoBehaviourSingleton<PacketManager>, IReceiveData
 {
 	Dictionary<uint, Action<uint, ushort, Stream>> onPacketReceived = new Dictionary<uint, Action<uint, ushort, Stream>>();
-
+	Crc32 crc32 = new Crc32();
 
 	uint localSequence = 0;
 	uint remoteSequence = 0;
@@ -88,9 +88,16 @@ public class PacketManager : MonoBehaviourSingleton<PacketManager>, IReceiveData
 				reliablePacketHeader.Serialize(memoryStream);
 			}
 		}
-
 		packetToSerialize.Serialize(memoryStream);
 
+		PacketWithCrc packetWithCrc = new PacketWithCrc();
+		packetWithCrc.crc = crc32.CalculateCrc(memoryStream.ToArray());
+		packetWithCrc.byteLength = memoryStream.ToArray().Length;
+		packetWithCrc.data = memoryStream.ToArray();	
+		memoryStream.Close();
+
+		memoryStream = new MemoryStream();
+		packetWithCrc.Serialize(memoryStream);
 		memoryStream.Close();
 
 		return memoryStream.ToArray();
@@ -98,9 +105,18 @@ public class PacketManager : MonoBehaviourSingleton<PacketManager>, IReceiveData
 
 	public void OnReceiveData(byte[] data, IPEndPoint iPEndPoint)
 	{
-		PacketHeader packetHeader = new PacketHeader();
 		MemoryStream memoryStream = new MemoryStream(data);
+		PacketWithCrc packetWithCrc = new PacketWithCrc();
+		packetWithCrc.Deserialize(memoryStream);
+		memoryStream.Close();
 
+		if (crc32.IsDataCorrupted(packetWithCrc.data, packetWithCrc.crc))
+		{
+			UnityEngine.Debug.LogError("Received corrupted data from " + iPEndPoint);
+			return;
+		} 
+		memoryStream = new MemoryStream(packetWithCrc.data);
+		PacketHeader packetHeader = new PacketHeader();
 		packetHeader.Deserialize(memoryStream);
 
 		if ((PacketType)packetHeader.packetTypeID == PacketType.User)
