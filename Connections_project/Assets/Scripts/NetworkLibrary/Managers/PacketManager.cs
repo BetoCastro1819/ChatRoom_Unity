@@ -5,14 +5,15 @@ using System;
 
 public class PacketManager : MonoBehaviourSingleton<PacketManager>, IReceiveData
 {
+	Queue<int> sequenceNumbersReceived = new Queue<int>();
 	Dictionary<uint, Action<uint, ushort, Stream>> onPacketReceived = new Dictionary<uint, Action<uint, ushort, Stream>>();
 	Crc32 crc32 = new Crc32();
 
-	uint localSequence = 0;
-	uint remoteSequence = 0;
-	uint ack = 0;
-	uint ackBitfields = 0;
+	const uint numberOfBitsInAck = 32;
 
+	uint localSequence = 0;
+	uint expectedSequence = 0;
+	int ackBitfields = 0;
 
 	protected override void Initialize()
 	{
@@ -81,8 +82,20 @@ public class PacketManager : MonoBehaviourSingleton<PacketManager>, IReceiveData
 			{
 				ReliablePacketHeader reliablePacketHeader = new ReliablePacketHeader();
 
-				reliablePacketHeader.sequence = localSequence;
-				reliablePacketHeader.ack = ack;
+				reliablePacketHeader.sequence = userPacketHeader.packetID;
+				reliablePacketHeader.ack = expectedSequence;
+
+				UnityEngine.Debug.Log("Setting up ackbits for packet Nro." + userPacketHeader.packetID);
+				ackBitfields = 0;
+				for (int i = 0; i <= numberOfBitsInAck; i++)
+				{
+					if (sequenceNumbersReceived.Contains((int)(expectedSequence - i)))
+					{
+						UnityEngine.Debug.Log("Sequence number is contained: " + (int)(expectedSequence - i));
+						ackBitfields |= 1 << i;
+					}
+				}
+				UnityEngine.Debug.Log("Ackbits to send: " + Convert.ToString(ackBitfields, 2));
 				reliablePacketHeader.ackBitfield = ackBitfields;
 
 				reliablePacketHeader.Serialize(memoryStream);
@@ -128,6 +141,8 @@ public class PacketManager : MonoBehaviourSingleton<PacketManager>, IReceiveData
 			{
 				ReliablePacketHeader reliablePacketHeader = new ReliablePacketHeader();
 				reliablePacketHeader.Deserialize(memoryStream);
+
+				ProcessReliablePacketReceived(reliablePacketHeader);
 			}	
 
 			InvokeCallback(userPacketHeader, memoryStream);
@@ -137,6 +152,39 @@ public class PacketManager : MonoBehaviourSingleton<PacketManager>, IReceiveData
 			NetworkManager.Instance.OnReceivePacket(iPEndPoint, (PacketType)packetHeader.packetTypeID, memoryStream);
 		}
 		memoryStream.Close();
+	}
+
+	private void ProcessReliablePacketReceived(ReliablePacketHeader reliablePacketHeader)
+	{
+		UnityEngine.Debug.Log("Reliable packet received");
+
+		if (reliablePacketHeader.sequence > expectedSequence)
+			expectedSequence = reliablePacketHeader.sequence;
+
+		int ackBits = reliablePacketHeader.ackBitfield;
+		UnityEngine.Debug.Log("Ackbits received: " + Convert.ToString(ackBits, 2));
+
+
+		if (!sequenceNumbersReceived.Contains((int)reliablePacketHeader.sequence))
+			sequenceNumbersReceived.Enqueue((int)reliablePacketHeader.sequence);
+
+		for (int i = 0; i < numberOfBitsInAck; i++)
+		{
+			if ((ackBits & (1 << i)) != 0)
+			{
+				int packetSequenceToAck = (int)(reliablePacketHeader.sequence - i);
+				UnityEngine.Debug.Log("Bit at position " + i + " is set.");
+				UnityEngine.Debug.Log("Acknowledging packet sequence " + packetSequenceToAck);
+
+				if (!sequenceNumbersReceived.Contains(packetSequenceToAck))
+					sequenceNumbersReceived.Enqueue(packetSequenceToAck);
+			}
+
+			if (sequenceNumbersReceived.Count >= numberOfBitsInAck)
+			{
+				sequenceNumbersReceived.Dequeue();
+			}
+		}
 	}
 
 	public void InvokeCallback(UserPacketHeader packetHeader, Stream stream)

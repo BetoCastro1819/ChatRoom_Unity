@@ -4,7 +4,7 @@ public class ReliablePacketHeader : ISerialzablePacket
 {
 	public uint sequence;
 	public uint ack;
-	public uint ackBitfield;
+	public int ackBitfield;
 
 	public void Serialize(Stream stream)
 	{
@@ -19,6 +19,6 @@ public class ReliablePacketHeader : ISerialzablePacket
 		BinaryReader binaryReader = new BinaryReader(stream);
 		sequence = binaryReader.ReadUInt32();
 		ack = binaryReader.ReadUInt32();
-		ackBitfield = binaryReader.ReadUInt32();
+		ackBitfield = binaryReader.ReadInt32();
 	}
 }

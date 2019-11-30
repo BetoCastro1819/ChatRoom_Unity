@@ -29,9 +29,10 @@ public class ChatScreen : MonoBehaviourSingleton<ChatScreen>
 				messages.text += textPacket.payload + System.Environment.NewLine;
 
 				if (NetworkManager.Instance.isServer)
-					PacketManager.Instance.SendPacket(textPacket, objectID);
+					PacketManager.Instance.SendReliablePacket(textPacket, objectID);
+					//PacketManager.Instance.SendPacket(textPacket, objectID);
 
-				break;
+					break;
 		}
     }
 
