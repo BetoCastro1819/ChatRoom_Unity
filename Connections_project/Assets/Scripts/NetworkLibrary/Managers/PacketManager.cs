@@ -5,10 +5,11 @@ using System;
 
 public class PacketManager : MonoBehaviourSingleton<PacketManager>, IReceiveData
 {
-	Queue<int> sequenceNumbersReceived = new Queue<int>();
 	Dictionary<uint, Action<uint, ushort, Stream>> onPacketReceived = new Dictionary<uint, Action<uint, ushort, Stream>>();
 	Crc32 crc32 = new Crc32();
 
+	Dictionary<uint, byte[]> packetsPendingToBeAcked = new Dictionary<uint, byte[]>();
+	Queue<int> sequenceNumbersReceived = new Queue<int>();
 	const uint numberOfBitsInAck = 32;
 
 	uint localSequence = 0;
@@ -18,6 +19,21 @@ public class PacketManager : MonoBehaviourSingleton<PacketManager>, IReceiveData
 	protected override void Initialize()
 	{
 		NetworkManager.Instance.OnReceiveEvent += OnReceiveData;
+	}
+
+	private void FixedUpdate()
+	{
+		if (NetworkManager.Instance.isServer) return;
+		if (packetsPendingToBeAcked.Count <= 0) return;
+
+		using (var pendingPacket = packetsPendingToBeAcked.GetEnumerator())
+		{
+			while (pendingPacket.MoveNext())
+			{
+				UnityEngine.Debug.Log("Sending pending packet");
+				SendPacketData(pendingPacket.Current.Value);
+			}
+		}
 	}
 
 	public void AddListener(uint listenerID, Action<uint, ushort, Stream> callback)
@@ -36,20 +52,24 @@ public class PacketManager : MonoBehaviourSingleton<PacketManager>, IReceiveData
 	{
 		byte[] packetData = SerializePacket(packetToSend, true, objectID);
 
-		if (NetworkManager.Instance.isServer)
-			NetworkManager.Instance.Broadcast(packetData);
-		else
-			NetworkManager.Instance.SendToServer(packetData);
+		UnityEngine.Debug.Log("Adding packet to pendign list: ID " + localSequence);
+		packetsPendingToBeAcked.Add(localSequence, packetData);
+
+		SendPacketData(packetData);
 	}
 
 	public void SendPacket<T>(NetworkPacket<T> packetToSend, uint objectID = 0)
 	{
 		byte[] packetData = SerializePacket(packetToSend, false, objectID);
+		SendPacketData(packetData);
+	}
 
+	private void SendPacketData(byte[] data)
+	{
 		if (NetworkManager.Instance.isServer)
-			NetworkManager.Instance.Broadcast(packetData);
+			NetworkManager.Instance.Broadcast(data);
 		else
-			NetworkManager.Instance.SendToServer(packetData);
+			NetworkManager.Instance.SendToServer(data);
 	}
 
 	public void SendPacketToClient<T>(NetworkPacket<T> packetToSend, IPEndPoint iPEndPoint, bool isReliable = false)
@@ -66,12 +86,14 @@ public class PacketManager : MonoBehaviourSingleton<PacketManager>, IReceiveData
 		packetHeader.packetTypeID = (uint)packetToSerialize.type;
 		packetHeader.Serialize(memoryStream);
 
+
 		if (packetToSerialize.type == PacketType.User)
 		{
 			UserPacketHeader userPacketHeader = new UserPacketHeader();
 
+			localSequence++;
 			userPacketHeader.packetTypeID = packetToSerialize.userPacketTypeID;
-			userPacketHeader.packetID = localSequence++;
+			userPacketHeader.packetID = localSequence;
 			userPacketHeader.senderID = NetworkManager.Instance.clientID;
 			userPacketHeader.objectID = objectID;
 			userPacketHeader.isReliable = isReliable;
@@ -82,7 +104,7 @@ public class PacketManager : MonoBehaviourSingleton<PacketManager>, IReceiveData
 			{
 				ReliablePacketHeader reliablePacketHeader = new ReliablePacketHeader();
 
-				reliablePacketHeader.sequence = userPacketHeader.packetID;
+				reliablePacketHeader.sequence = localSequence;
 				reliablePacketHeader.ack = expectedSequence;
 
 				UnityEngine.Debug.Log("Setting up ackbits for packet Nro." + userPacketHeader.packetID);
@@ -112,6 +134,8 @@ public class PacketManager : MonoBehaviourSingleton<PacketManager>, IReceiveData
 		memoryStream = new MemoryStream();
 		packetWithCrc.Serialize(memoryStream);
 		memoryStream.Close();
+
+
 
 		return memoryStream.ToArray();
 	}
@@ -178,6 +202,13 @@ public class PacketManager : MonoBehaviourSingleton<PacketManager>, IReceiveData
 
 				if (!sequenceNumbersReceived.Contains(packetSequenceToAck))
 					sequenceNumbersReceived.Enqueue(packetSequenceToAck);
+
+				if (packetsPendingToBeAcked.ContainsKey((uint)packetSequenceToAck))
+				{
+					UnityEngine.Debug.Log("Removing packet from pending list: ID " + packetSequenceToAck);
+					packetsPendingToBeAcked.Remove((uint)packetSequenceToAck);
+					UnityEngine.Debug.Log("Number of pending packets: " + packetsPendingToBeAcked.Count);
+				}
 			}
 
 			if (sequenceNumbersReceived.Count >= numberOfBitsInAck)

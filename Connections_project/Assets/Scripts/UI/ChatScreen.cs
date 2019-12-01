@@ -30,7 +30,6 @@ public class ChatScreen : MonoBehaviourSingleton<ChatScreen>
 
 				if (NetworkManager.Instance.isServer)
 					PacketManager.Instance.SendReliablePacket(textPacket, objectID);
-					//PacketManager.Instance.SendPacket(textPacket, objectID);
 
 					break;
 		}
