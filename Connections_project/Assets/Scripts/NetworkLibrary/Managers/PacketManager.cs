@@ -6,6 +6,8 @@ using UnityEngine;
 
 public class PacketManager : MonoBehaviourSingleton<PacketManager>, IReceiveData
 {
+	[SerializeField] bool enablePacketLossSimulation = false;
+	[SerializeField] int porcentageOfPacketLossSimulation = 25;
 	[SerializeField] float resendPacketRate = 1.0f;
 
 	Dictionary<uint, Action<uint, ushort, Stream>> onPacketReceived = new Dictionary<uint, Action<uint, ushort, Stream>>();
@@ -195,8 +197,7 @@ public class PacketManager : MonoBehaviourSingleton<PacketManager>, IReceiveData
 
 	private void ProcessReliablePacketReceived(ReliablePacketHeader reliablePacketHeader)
 	{
-		// Packets will be lost 25% of the times
-		if (UnityEngine.Random.Range(0, 100) < 25) 
+		if (enablePacketLossSimulation && UnityEngine.Random.Range(0, 100) < porcentageOfPacketLossSimulation) 
 		{
 			UnityEngine.Debug.Log("Packet lost simulation");
 			return;
