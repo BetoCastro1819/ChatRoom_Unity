@@ -1,8 +1,6 @@
 ﻿using System.IO;
 
-public struct UserPacketPayloadData { }
-
-public class UserPacket : NetworkPacket<UserPacketPayloadData>
+public class UserPacket<T> : NetworkPacket<T>
 {
 	public UserPacket(ushort userPacketTypeID) : base(PacketType.User)
 	{

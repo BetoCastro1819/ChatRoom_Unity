@@ -1,8 +1,8 @@
 ﻿using System.IO;
 
-public class TextPacket : NetworkPacket<string>
+public class TextPacket : UserPacket<string>
 {
-	public TextPacket() : base(PacketType.User) { }
+	public TextPacket() : base((ushort)UserPacketType.Text_Message) { }
 
 	protected override void OnSerialize(Stream stream)
 	{
