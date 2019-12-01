@@ -1812,6 +1812,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5d8465126ebd0b408f849089c687d90, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  resendPacketRate: 4
 --- !u!4 &1602544523
 Transform:
   m_ObjectHideFlags: 0

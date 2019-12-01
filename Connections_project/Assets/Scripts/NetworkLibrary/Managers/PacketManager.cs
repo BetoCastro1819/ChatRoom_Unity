@@ -2,35 +2,46 @@
 using System.IO;
 using System.Net;
 using System;
+using UnityEngine;
 
 public class PacketManager : MonoBehaviourSingleton<PacketManager>, IReceiveData
 {
+	[SerializeField] float resendPacketRate = 1.0f;
+
 	Dictionary<uint, Action<uint, ushort, Stream>> onPacketReceived = new Dictionary<uint, Action<uint, ushort, Stream>>();
 	Crc32 crc32 = new Crc32();
 
 	Dictionary<uint, byte[]> packetsPendingToBeAcked = new Dictionary<uint, byte[]>();
-	Queue<int> sequenceNumbersReceived = new Queue<int>();
+	Queue<uint> sequenceNumbersReceived = new Queue<uint>();
 	const uint numberOfBitsInAck = 32;
 
 	uint localSequence = 0;
-	uint expectedSequence = 0;
+	uint remoteSequence = 0;
 	int ackBitfields = 0;
+
+	float packetRateTimer = 0;
 
 	protected override void Initialize()
 	{
 		NetworkManager.Instance.OnReceiveEvent += OnReceiveData;
 	}
 
-	private void FixedUpdate()
+	private void Update()
 	{
-		if (NetworkManager.Instance.isServer) return;
-		if (packetsPendingToBeAcked.Count <= 0) return;
+		if ((packetRateTimer += Time.deltaTime) < resendPacketRate) return;
+		packetRateTimer = 0;
+
+		if (packetsPendingToBeAcked.Count <= 0) 
+		{
+			//Debug.Log("No packets pending to resend");
+			return;
+		}
 
 		using (var pendingPacket = packetsPendingToBeAcked.GetEnumerator())
 		{
 			while (pendingPacket.MoveNext())
 			{
-				UnityEngine.Debug.Log("Sending pending packet");
+				UnityEngine.Debug.Log("Sending pending packet with ID " + pendingPacket.Current.Key);
 				SendPacketData(pendingPacket.Current.Value);
 			}
 		}
@@ -52,10 +63,12 @@ public class PacketManager : MonoBehaviourSingleton<PacketManager>, IReceiveData
 	{
 		byte[] packetData = SerializePacket(packetToSend, true, objectID);
 
-		UnityEngine.Debug.Log("Adding packet to pendign list: ID " + localSequence);
-		packetsPendingToBeAcked.Add(localSequence, packetData);
+		//UnityEngine.Debug.Log("Adding packet to pendign list: ID " + localSequence);
+		//packetsPendingToBeAcked.Add(localSequence, packetData);
 
 		SendPacketData(packetData);
+
+		localSequence++;
 	}
 
 	public void SendPacket<T>(NetworkPacket<T> packetToSend, uint objectID = 0)
@@ -86,12 +99,10 @@ public class PacketManager : MonoBehaviourSingleton<PacketManager>, IReceiveData
 		packetHeader.packetTypeID = (uint)packetToSerialize.type;
 		packetHeader.Serialize(memoryStream);
 
-
 		if (packetToSerialize.type == PacketType.User)
 		{
 			UserPacketHeader userPacketHeader = new UserPacketHeader();
 
-			localSequence++;
 			userPacketHeader.packetTypeID = packetToSerialize.userPacketTypeID;
 			userPacketHeader.packetID = localSequence;
 			userPacketHeader.senderID = NetworkManager.Instance.clientID;
@@ -100,28 +111,27 @@ public class PacketManager : MonoBehaviourSingleton<PacketManager>, IReceiveData
 
 			userPacketHeader.Serialize(memoryStream);
 
-			if (isReliable)
+
+			ReliablePacketHeader reliablePacketHeader = new ReliablePacketHeader();
+
+			reliablePacketHeader.sequence = localSequence;
+			reliablePacketHeader.ack = remoteSequence;
+
+			UnityEngine.Debug.Log("Setting up ackbits for packet Nro." + localSequence);
+			ackBitfields = 0;
+			for (int i = 0; i <= numberOfBitsInAck; i++)
 			{
-				ReliablePacketHeader reliablePacketHeader = new ReliablePacketHeader();
-
-				reliablePacketHeader.sequence = localSequence;
-				reliablePacketHeader.ack = expectedSequence;
-
-				UnityEngine.Debug.Log("Setting up ackbits for packet Nro." + userPacketHeader.packetID);
-				ackBitfields = 0;
-				for (int i = 0; i <= numberOfBitsInAck; i++)
+				if (sequenceNumbersReceived.Contains((uint)(remoteSequence - i)))
 				{
-					if (sequenceNumbersReceived.Contains((int)(expectedSequence - i)))
-					{
-						UnityEngine.Debug.Log("Sequence number is contained: " + (int)(expectedSequence - i));
-						ackBitfields |= 1 << i;
-					}
+					//UnityEngine.Debug.Log("Sequence number is contained: " + (int)(expectedSequence - i));
+					ackBitfields |= 1 << i;
 				}
-				UnityEngine.Debug.Log("Ackbits to send: " + Convert.ToString(ackBitfields, 2));
-				reliablePacketHeader.ackBitfield = ackBitfields;
-
-				reliablePacketHeader.Serialize(memoryStream);
 			}
+			UnityEngine.Debug.Log("Ackbits to send: " + Convert.ToString(ackBitfields, 2));
+			reliablePacketHeader.ackBitfield = ackBitfields;
+
+			reliablePacketHeader.Serialize(memoryStream);
+
 		}
 		packetToSerialize.Serialize(memoryStream);
 
@@ -135,7 +145,12 @@ public class PacketManager : MonoBehaviourSingleton<PacketManager>, IReceiveData
 		packetWithCrc.Serialize(memoryStream);
 		memoryStream.Close();
 
-
+		if (isReliable)
+		{
+			UnityEngine.Debug.Log("Adding packet to pending list: ID " + localSequence);
+			if (!packetsPendingToBeAcked.ContainsKey(localSequence))
+				packetsPendingToBeAcked.Add(localSequence, memoryStream.ToArray());
+		}
 
 		return memoryStream.ToArray();
 	}
@@ -161,13 +176,13 @@ public class PacketManager : MonoBehaviourSingleton<PacketManager>, IReceiveData
 			UserPacketHeader userPacketHeader = new UserPacketHeader();
 			userPacketHeader.Deserialize(memoryStream);
 
-			if (userPacketHeader.isReliable)
-			{
-				ReliablePacketHeader reliablePacketHeader = new ReliablePacketHeader();
-				reliablePacketHeader.Deserialize(memoryStream);
+			ReliablePacketHeader reliablePacketHeader = new ReliablePacketHeader();
+			reliablePacketHeader.Deserialize(memoryStream);
+			ProcessReliablePacketReceived(reliablePacketHeader);
 
-				ProcessReliablePacketReceived(reliablePacketHeader);
-			}	
+			//if (userPacketHeader.isReliable)
+			//{
+			//}	
 
 			InvokeCallback(userPacketHeader, memoryStream);
 		}
@@ -180,40 +195,43 @@ public class PacketManager : MonoBehaviourSingleton<PacketManager>, IReceiveData
 
 	private void ProcessReliablePacketReceived(ReliablePacketHeader reliablePacketHeader)
 	{
-		UnityEngine.Debug.Log("Reliable packet received");
+		// Packets will be lost 25% of the times
+		if (UnityEngine.Random.Range(0, 100) < 25) 
+		{
+			UnityEngine.Debug.Log("Packet lost simulation");
+			return;
+		}
 
-		if (reliablePacketHeader.sequence > expectedSequence)
-			expectedSequence = reliablePacketHeader.sequence;
+		UnityEngine.Debug.Log("Reliable packet received");
+		UnityEngine.Debug.Log("Remote sequence: ID " + remoteSequence);
+		UnityEngine.Debug.Log("Sequence received: ID " + reliablePacketHeader.sequence);
+		UnityEngine.Debug.Log("Latest packet that the other machine received: ID " + reliablePacketHeader.ack);
+
+		if (reliablePacketHeader.sequence > remoteSequence)
+			remoteSequence = reliablePacketHeader.sequence;
+
+		if (!sequenceNumbersReceived.Contains(reliablePacketHeader.sequence))
+			sequenceNumbersReceived.Enqueue(reliablePacketHeader.sequence);
+
+		if (sequenceNumbersReceived.Count > numberOfBitsInAck)
+			sequenceNumbersReceived.Dequeue();
 
 		int ackBits = reliablePacketHeader.ackBitfield;
 		UnityEngine.Debug.Log("Ackbits received: " + Convert.ToString(ackBits, 2));
-
-
-		if (!sequenceNumbersReceived.Contains((int)reliablePacketHeader.sequence))
-			sequenceNumbersReceived.Enqueue((int)reliablePacketHeader.sequence);
-
 		for (int i = 0; i < numberOfBitsInAck; i++)
 		{
 			if ((ackBits & (1 << i)) != 0)
 			{
-				int packetSequenceToAck = (int)(reliablePacketHeader.sequence - i);
+				int packetSequenceToAck = (int)(reliablePacketHeader.ack - i);
+
 				UnityEngine.Debug.Log("Bit at position " + i + " is set.");
 				UnityEngine.Debug.Log("Acknowledging packet sequence " + packetSequenceToAck);
 
-				if (!sequenceNumbersReceived.Contains(packetSequenceToAck))
-					sequenceNumbersReceived.Enqueue(packetSequenceToAck);
-
 				if (packetsPendingToBeAcked.ContainsKey((uint)packetSequenceToAck))
 				{
-					UnityEngine.Debug.Log("Removing packet from pending list: ID " + packetSequenceToAck);
+					UnityEngine.Debug.Log("Removin packet Nro." + packetSequenceToAck + " from pending list");
 					packetsPendingToBeAcked.Remove((uint)packetSequenceToAck);
-					UnityEngine.Debug.Log("Number of pending packets: " + packetsPendingToBeAcked.Count);
 				}
-			}
-
-			if (sequenceNumbersReceived.Count >= numberOfBitsInAck)
-			{
-				sequenceNumbersReceived.Dequeue();
 			}
 		}
 	}

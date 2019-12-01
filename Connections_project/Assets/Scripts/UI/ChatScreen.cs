@@ -29,9 +29,9 @@ public class ChatScreen : MonoBehaviourSingleton<ChatScreen>
 				messages.text += textPacket.payload + System.Environment.NewLine;
 
 				if (NetworkManager.Instance.isServer)
-					PacketManager.Instance.SendReliablePacket(textPacket, objectID);
+		            NetworkMessageManager.Instance.SendTextMessage(textPacket.payload, objectID);
 
-					break;
+				break;
 		}
     }
 
@@ -39,7 +39,7 @@ public class ChatScreen : MonoBehaviourSingleton<ChatScreen>
     {
         if (inputMessage.text != "")
         {
-            NetworkMessageManager.Instance.SendTextMessage(inputMessage.text, objectID);
+            NetworkMessageManager.Instance.SendTextMessage(inputMessage.text, objectID, true);
 
           	if (NetworkManager.Instance.isServer)
             	messages.text += inputMessage.text + System.Environment.NewLine;
