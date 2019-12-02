@@ -1,9 +1,9 @@
 ﻿using System.IO;
 using UnityEngine;
 
-public class VelocityPacket : UserPacket<Vector3>
+public class PositionPacket : UserPacket<Vector3>
 {
-	public VelocityPacket() : base((ushort)UserPacketType.Velocity) { }
+	public PositionPacket() : base((ushort)UserPacketType.Position) { }
 
 	protected override void OnSerialize(Stream stream)
 	{
@@ -14,11 +14,11 @@ public class VelocityPacket : UserPacket<Vector3>
 		binaryWriter.Write(payload.y);
 		binaryWriter.Write(payload.z);
 	}
-	
+
 	protected override void OnDeserialize(Stream stream)
 	{
 		BinaryReader binaryReader = new BinaryReader(stream);
-		
+
 		//payload.enitityID = binaryReader.ReadUInt16();
 		payload.x = binaryReader.ReadSingle();
 		payload.y = binaryReader.ReadSingle();

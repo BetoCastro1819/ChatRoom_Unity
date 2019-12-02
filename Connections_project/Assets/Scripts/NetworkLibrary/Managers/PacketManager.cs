@@ -53,8 +53,8 @@ public class PacketManager : MonoBehaviourSingleton<PacketManager>, IReceiveData
 	{
 		if (!onPacketReceived.ContainsKey(listenerID))
 		{
-			Debug.Log("Added listener with ID " + listenerID);
-			
+			//Debug.Log("Added listener with ID " + listenerID);
+
 			onPacketReceived.Add(listenerID, callback);
 		}
 	}

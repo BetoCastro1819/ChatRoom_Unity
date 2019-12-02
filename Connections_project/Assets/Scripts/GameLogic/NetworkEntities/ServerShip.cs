@@ -19,16 +19,27 @@ public class ServerShip : NetworkEntity
 		{
 			case (ushort)UserPacketType.Velocity:
 
-				VelocityPacket velocityPacket = new VelocityPacket();
-				velocityPacket.Deserialize(stream);
+				//VelocityPacket velocityPacket = new VelocityPacket();
+				//velocityPacket.Deserialize(stream);
+//
+				//Debug.Log("Applying velocity received to " + gameObject.name);
+				//Vector3 velocityReceived = new Vector3(
+				//	velocityPacket.payload.x,
+				//	velocityPacket.payload.y,
+				//	velocityPacket.payload.z
+				//);
+				//rb.velocity = velocityReceived;
+				break;
+			case (ushort)UserPacketType.Position:
+				PositionPacket positionPacket = new PositionPacket();
+				positionPacket.Deserialize(stream);
 
-				Debug.Log("Applying velocity received to " + gameObject.name);
-				Vector3 velocityReceived = new Vector3(
-					velocityPacket.payload.x,
-					velocityPacket.payload.y,
-					velocityPacket.payload.z
+				Vector3 position = new Vector3(
+					positionPacket.payload.x,
+					positionPacket.payload.y,
+					positionPacket.payload.z
 				);
-				rb.velocity = velocityReceived;
+				rb.position = position;
 				break;
 		}
 	}
@@ -44,6 +55,7 @@ public class ServerShip : NetworkEntity
 		rb.velocity = velocity * speed;
 
 		//Debug.Log("Sending packet from " + gameObject.name);
-		NetworkMessageManager.Instance.SendVelocity(velocity * speed, (uint)objectID);
+		//NetworkMessageManager.Instance.SendVelocity(velocity * speed, (uint)objectID);
+		NetworkMessageManager.Instance.SendPosition(rb.position, (uint)objectID);
 	}
 }
