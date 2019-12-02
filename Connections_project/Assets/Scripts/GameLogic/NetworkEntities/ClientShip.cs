@@ -1,8 +1,12 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 
 public class ClientShip : NetworkEntity
 {
+	Dictionary<uint, Vector3> inputs = new Dictionary<uint, Vector3>();
+	uint sequence = 0;
+
     protected override void Start()
     {
 		base.Start();
@@ -43,6 +47,10 @@ public class ClientShip : NetworkEntity
 					positionPacket.payload.z
 				);
 				rb.position = position;
+
+				if (NetworkManager.Instance.isServer)
+					NetworkMessageManager.Instance.SendPosition(rb.position, (uint)objectID);
+
 				break;
 		}
 	}
@@ -51,13 +59,35 @@ public class ClientShip : NetworkEntity
     {
 		if (NetworkManager.Instance.isServer) return;
 		
-		float horizontal = Input.GetAxis("Horizontal");
-		float vertical = Input.GetAxis("Vertical");
+		float horizontal = Input.GetAxisRaw("Horizontal");
+		float vertical = Input.GetAxisRaw("Vertical");
 
-		Vector3 velocity = new Vector3(horizontal, 0, vertical);
-		//rb.velocity = velocity * speed;
+
+		Vector3 movPosition = Vector3.zero;
+		if (Input.GetKeyDown(KeyCode.LeftArrow))
+		{
+			movPosition += -Vector3.right;
+			NetworkMessageManager.Instance.SendPosition(rb.position + movPosition, (uint)objectID);
+		}
+		else if (Input.GetKeyDown(KeyCode.RightArrow))
+		{
+			movPosition += Vector3.right;
+			NetworkMessageManager.Instance.SendPosition(rb.position + movPosition, (uint)objectID);
+		}
+		else if (Input.GetKeyDown(KeyCode.DownArrow))
+		{
+			movPosition += -Vector3.forward;
+			NetworkMessageManager.Instance.SendPosition(rb.position + movPosition, (uint)objectID);
+		}
+		else if (Input.GetKeyDown(KeyCode.UpArrow))
+		{
+			movPosition += Vector3.forward;
+			NetworkMessageManager.Instance.SendPosition(rb.position + movPosition, (uint)objectID);
+		}
+		//rb.position += movPosition;
 
 		//Debug.Log("Sending packet from " + gameObject.name);
-		NetworkMessageManager.Instance.SendVelocity(velocity * speed, (uint)objectID);
-    }
+		//NetworkMessageManager.Instance.SendVelocity(rb.velocity, (uint)objectID);
+		//inputs.Add(sequence++, rb.velocity);
+	}
 }

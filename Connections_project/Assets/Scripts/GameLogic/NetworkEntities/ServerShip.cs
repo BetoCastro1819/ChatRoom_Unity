@@ -17,19 +17,6 @@ public class ServerShip : NetworkEntity
 
 		switch (packetTypeID)
 		{
-			case (ushort)UserPacketType.Velocity:
-
-				//VelocityPacket velocityPacket = new VelocityPacket();
-				//velocityPacket.Deserialize(stream);
-//
-				//Debug.Log("Applying velocity received to " + gameObject.name);
-				//Vector3 velocityReceived = new Vector3(
-				//	velocityPacket.payload.x,
-				//	velocityPacket.payload.y,
-				//	velocityPacket.payload.z
-				//);
-				//rb.velocity = velocityReceived;
-				break;
 			case (ushort)UserPacketType.Position:
 				PositionPacket positionPacket = new PositionPacket();
 				positionPacket.Deserialize(stream);
