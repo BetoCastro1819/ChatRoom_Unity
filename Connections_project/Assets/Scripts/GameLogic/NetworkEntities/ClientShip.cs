@@ -1,9 +1,12 @@
 ﻿using System.Collections.Generic;
+using System.Collections;
 using System.IO;
 using UnityEngine;
 
 public class ClientShip : NetworkEntity
 {
+	[SerializeField] float simulatedLagInMs = 0.2f;
+
 	Dictionary<uint, Vector3> inputs = new Dictionary<uint, Vector3>();
 	uint sequence = 0;
 
@@ -49,13 +52,20 @@ public class ClientShip : NetworkEntity
 				rb.position = position;
 
 				if (NetworkManager.Instance.isServer)
-					NetworkMessageManager.Instance.SendPosition(rb.position, (uint)objectID);
+					StartCoroutine(SendServerResponseWithLag(position));
 
 				break;
 		}
 	}
 
-    void FixedUpdate()
+	IEnumerator SendServerResponseWithLag(Vector3 position)
+	{
+		yield return new WaitForSeconds(simulatedLagInMs);
+		NetworkMessageManager.Instance.SendPosition(position, (uint)objectID);
+	} 
+
+    //void FixedUpdate()
+	void Update()
     {
 		if (NetworkManager.Instance.isServer) return;
 		
@@ -83,11 +93,11 @@ public class ClientShip : NetworkEntity
 		{
 			movPosition += Vector3.forward;
 			NetworkMessageManager.Instance.SendPosition(rb.position + movPosition, (uint)objectID);
+			//inputs.Add(sequence++, rb.velocity);
 		}
-		//rb.position += movPosition;
+		rb.position += movPosition;
 
 		//Debug.Log("Sending packet from " + gameObject.name);
 		//NetworkMessageManager.Instance.SendVelocity(rb.velocity, (uint)objectID);
-		//inputs.Add(sequence++, rb.velocity);
 	}
 }

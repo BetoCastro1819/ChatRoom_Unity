@@ -1099,6 +1099,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   speed: 20
+  simulatedLagInMs: 0.2
 --- !u!4 &571708084
 Transform:
   m_ObjectHideFlags: 0
