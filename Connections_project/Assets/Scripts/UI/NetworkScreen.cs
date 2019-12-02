@@ -6,6 +6,9 @@ using System.Net;
 
 public class NetworkScreen : MonoBehaviourSingleton<NetworkScreen>
 {
+	public GameObject networkEntity_server;
+	public GameObject networkEntity_client;
+
     public Button connectBtn;
     public Button startServerBtn;
     public InputField portInputField;
@@ -38,7 +41,10 @@ public class NetworkScreen : MonoBehaviourSingleton<NetworkScreen>
 
     void SwitchToChatScreen()
     {
-        ChatScreen.Instance.gameObject.SetActive(true);
+        //ChatScreen.Instance.gameObject.SetActive(true);
+		networkEntity_server.SetActive(true);
+		networkEntity_client.SetActive(true);
+
         this.gameObject.SetActive(false);
     }
 }

@@ -43,7 +43,7 @@ public class PacketManager : MonoBehaviourSingleton<PacketManager>, IReceiveData
 		{
 			while (pendingPacket.MoveNext())
 			{
-				UnityEngine.Debug.Log("Sending pending packet with ID " + pendingPacket.Current.Key);
+				//UnityEngine.Debug.Log("Sending pending packet with ID " + pendingPacket.Current.Key);
 				SendPacketData(pendingPacket.Current.Value);
 			}
 		}
@@ -119,7 +119,7 @@ public class PacketManager : MonoBehaviourSingleton<PacketManager>, IReceiveData
 			reliablePacketHeader.sequence = localSequence;
 			reliablePacketHeader.ack = remoteSequence;
 
-			UnityEngine.Debug.Log("Setting up ackbits for packet Nro." + localSequence);
+			//UnityEngine.Debug.Log("Setting up ackbits for packet Nro." + localSequence);
 			ackBitfields = 0;
 			for (int i = 0; i <= numberOfBitsInAck; i++)
 			{
@@ -129,7 +129,7 @@ public class PacketManager : MonoBehaviourSingleton<PacketManager>, IReceiveData
 					ackBitfields |= 1 << i;
 				}
 			}
-			UnityEngine.Debug.Log("Ackbits to send: " + Convert.ToString(ackBitfields, 2));
+			//UnityEngine.Debug.Log("Ackbits to send: " + Convert.ToString(ackBitfields, 2));
 			reliablePacketHeader.ackBitfield = ackBitfields;
 
 			reliablePacketHeader.Serialize(memoryStream);
@@ -149,7 +149,7 @@ public class PacketManager : MonoBehaviourSingleton<PacketManager>, IReceiveData
 
 		if (isReliable)
 		{
-			UnityEngine.Debug.Log("Adding packet to pending list: ID " + localSequence);
+			//UnityEngine.Debug.Log("Adding packet to pending list: ID " + localSequence);
 			if (!packetsPendingToBeAcked.ContainsKey(localSequence))
 				packetsPendingToBeAcked.Add(localSequence, memoryStream.ToArray());
 		}
@@ -182,10 +182,6 @@ public class PacketManager : MonoBehaviourSingleton<PacketManager>, IReceiveData
 			reliablePacketHeader.Deserialize(memoryStream);
 			ProcessReliablePacketReceived(reliablePacketHeader);
 
-			//if (userPacketHeader.isReliable)
-			//{
-			//}	
-
 			InvokeCallback(userPacketHeader, memoryStream);
 		}
 		else
@@ -203,10 +199,10 @@ public class PacketManager : MonoBehaviourSingleton<PacketManager>, IReceiveData
 			return;
 		}
 
-		UnityEngine.Debug.Log("Reliable packet received");
-		UnityEngine.Debug.Log("Remote sequence: ID " + remoteSequence);
-		UnityEngine.Debug.Log("Sequence received: ID " + reliablePacketHeader.sequence);
-		UnityEngine.Debug.Log("Latest packet that the other machine received: ID " + reliablePacketHeader.ack);
+		//UnityEngine.Debug.Log("Reliable packet received");
+		//UnityEngine.Debug.Log("Remote sequence: ID " + remoteSequence);
+		//UnityEngine.Debug.Log("Sequence received: ID " + reliablePacketHeader.sequence);
+		//UnityEngine.Debug.Log("Latest packet that the other machine received: ID " + reliablePacketHeader.ack);
 
 		if (reliablePacketHeader.sequence > remoteSequence)
 			remoteSequence = reliablePacketHeader.sequence;
@@ -218,19 +214,19 @@ public class PacketManager : MonoBehaviourSingleton<PacketManager>, IReceiveData
 			sequenceNumbersReceived.Dequeue();
 
 		int ackBits = reliablePacketHeader.ackBitfield;
-		UnityEngine.Debug.Log("Ackbits received: " + Convert.ToString(ackBits, 2));
+		//UnityEngine.Debug.Log("Ackbits received: " + Convert.ToString(ackBits, 2));
 		for (int i = 0; i < numberOfBitsInAck; i++)
 		{
 			if ((ackBits & (1 << i)) != 0)
 			{
 				int packetSequenceToAck = (int)(reliablePacketHeader.ack - i);
 
-				UnityEngine.Debug.Log("Bit at position " + i + " is set.");
-				UnityEngine.Debug.Log("Acknowledging packet sequence " + packetSequenceToAck);
+				//UnityEngine.Debug.Log("Bit at position " + i + " is set.");
+				//UnityEngine.Debug.Log("Acknowledging packet sequence " + packetSequenceToAck);
 
 				if (packetsPendingToBeAcked.ContainsKey((uint)packetSequenceToAck))
 				{
-					UnityEngine.Debug.Log("Removin packet Nro." + packetSequenceToAck + " from pending list");
+					//UnityEngine.Debug.Log("Removin packet Nro." + packetSequenceToAck + " from pending list");
 					packetsPendingToBeAcked.Remove((uint)packetSequenceToAck);
 				}
 			}

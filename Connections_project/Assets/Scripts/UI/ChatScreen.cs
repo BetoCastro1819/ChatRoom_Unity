@@ -19,7 +19,7 @@ public class ChatScreen : MonoBehaviourSingleton<ChatScreen>
 
     void OnReceiveDataEvent(uint packetID, ushort packetTypeID, Stream stream)
     {
-		Debug.Log("On recieve data Event");
+		//Debug.Log("On recieve data Event");
 
 		switch (packetTypeID)
 		{
