@@ -10,24 +10,26 @@ public class NetworkMessageManager : MonoBehaviourSingleton<NetworkMessageManage
 		SendPacket(textPacket, objectID);
     }
 
-	public void SendVelocity(Vector3 velocity, uint objectID, bool sendAsReliable = false)
+	public void SendVelocity(Vector3 velocity, uint objectID, uint sequence = 0, bool sendAsReliable = false)
 	{
 		VelocityPacket velocityPacket = new VelocityPacket();
 
-		velocityPacket.payload.x = velocity.x;
-		velocityPacket.payload.y = velocity.y;
-		velocityPacket.payload.z = velocity.z;
+		velocityPacket.payload.sequence = sequence;
+		velocityPacket.payload.velocity.x = velocity.x;
+		velocityPacket.payload.velocity.y = velocity.y;
+		velocityPacket.payload.velocity.z = velocity.z;
 		
 		SendPacket(velocityPacket, objectID);
 	}
 
-	public void SendPosition(Vector3 position, uint objectID, bool sendAsReliable = false)
+	public void SendPosition(Vector3 position, uint objectID, uint sequence = 0, bool sendAsReliable = false)
 	{
 		PositionPacket positionPacket = new PositionPacket();
 
-		positionPacket.payload.x = position.x;
-		positionPacket.payload.y = position.y;
-		positionPacket.payload.z = position.z;
+		positionPacket.payload.sequence = sequence;
+		positionPacket.payload.position.x = position.x;
+		positionPacket.payload.position.y = position.y;
+		positionPacket.payload.position.z = position.z;
 
 		SendPacket(positionPacket, objectID);
 	}

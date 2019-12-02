@@ -29,14 +29,14 @@ public class ClientShip : NetworkEntity
 
 				//Debug.Log("Applying velocity received to " + gameObject.name);
 				Vector3 velocityReceived = new Vector3(
-					velocityPacket.payload.x,
-					velocityPacket.payload.y,
-					velocityPacket.payload.z
+					velocityPacket.payload.velocity.x,
+					velocityPacket.payload.velocity.y,
+					velocityPacket.payload.velocity.z
 				);
-				rb.velocity = velocityReceived;
+				rb.position += velocityReceived;
 
 				if (NetworkManager.Instance.isServer)
-					NetworkMessageManager.Instance.SendPosition(rb.position, (uint)objectID);
+					NetworkMessageManager.Instance.SendPosition(rb.position, (uint)objectID, velocityPacket.payload.sequence);
 
 				break;
 
@@ -45,27 +45,40 @@ public class ClientShip : NetworkEntity
 				positionPacket.Deserialize(stream);
 
 				Vector3 position = new Vector3(
-					positionPacket.payload.x,
-					positionPacket.payload.y,
-					positionPacket.payload.z
+					positionPacket.payload.position.x,
+					positionPacket.payload.position.y,
+					positionPacket.payload.position.z
 				);
 				rb.position = position;
+				//Debug.Log("Position before reconciliation: " + position);
+
+				Vector3 reconciliationPosition = Vector3.zero;
+				inputs.Remove(positionPacket.payload.sequence);
+				for (uint currentInputKey = positionPacket.payload.sequence; currentInputKey < sequence; currentInputKey++)
+				{
+					if (inputs.ContainsKey(currentInputKey))
+					{
+						//Debug.Log("Removing input with ID " + currentInputKey);
+						reconciliationPosition += inputs[currentInputKey];
+					}
+				}
+				rb.position += reconciliationPosition;
+				//Debug.Log("Position after reconciliation: " + rb.position);
 
 				if (NetworkManager.Instance.isServer)
-					StartCoroutine(SendServerResponseWithLag(position));
+					StartCoroutine(SendServerResponseWithLag(rb.position, positionPacket.payload.sequence));
 
 				break;
 		}
 	}
 
-	IEnumerator SendServerResponseWithLag(Vector3 position)
+	IEnumerator SendServerResponseWithLag(Vector3 position, uint sequence)
 	{
 		yield return new WaitForSeconds(simulatedLagInMs);
-		NetworkMessageManager.Instance.SendPosition(position, (uint)objectID);
+		NetworkMessageManager.Instance.SendPosition(position, (uint)objectID, sequence);
 	} 
 
-    //void FixedUpdate()
-	void Update()
+    void FixedUpdate()
     {
 		if (NetworkManager.Instance.isServer) return;
 		
@@ -74,30 +87,42 @@ public class ClientShip : NetworkEntity
 
 
 		Vector3 movPosition = Vector3.zero;
-		if (Input.GetKeyDown(KeyCode.LeftArrow))
+		if (Input.GetKey(KeyCode.LeftArrow))
 		{
-			movPosition += -Vector3.right;
-			NetworkMessageManager.Instance.SendPosition(rb.position + movPosition, (uint)objectID);
+			movPosition += -Vector3.right * speed  * Time.fixedDeltaTime;
+			NetworkMessageManager.Instance.SendVelocity(movPosition, (uint)objectID, sequence);
+
+			Vector3 positionRequest = rb.position + movPosition; 
+			Debug.Log("Saving position request for " + positionRequest + " with ID " + sequence);
+			inputs.Add(sequence++, movPosition);
 		}
-		else if (Input.GetKeyDown(KeyCode.RightArrow))
+		else if (Input.GetKey(KeyCode.RightArrow))
 		{
-			movPosition += Vector3.right;
-			NetworkMessageManager.Instance.SendPosition(rb.position + movPosition, (uint)objectID);
+			movPosition += Vector3.right * speed * Time.fixedDeltaTime;
+			NetworkMessageManager.Instance.SendVelocity(movPosition, (uint)objectID, sequence);
+
+			Vector3 positionRequest = rb.position + movPosition;
+			Debug.Log("Saving position request for " + positionRequest + " with ID " + sequence);
+			inputs.Add(sequence++, movPosition);		
 		}
-		else if (Input.GetKeyDown(KeyCode.DownArrow))
+		else if (Input.GetKey(KeyCode.DownArrow))
 		{
-			movPosition += -Vector3.forward;
-			NetworkMessageManager.Instance.SendPosition(rb.position + movPosition, (uint)objectID);
+			movPosition += -Vector3.forward * speed * Time.fixedDeltaTime;
+			NetworkMessageManager.Instance.SendVelocity(movPosition, (uint)objectID, sequence);
+
+			Vector3 positionRequest = rb.position + movPosition;
+			Debug.Log("Saving position request for " + positionRequest + " with ID " + sequence);
+			inputs.Add(sequence++, movPosition);
 		}
-		else if (Input.GetKeyDown(KeyCode.UpArrow))
+		else if (Input.GetKey(KeyCode.UpArrow))
 		{
-			movPosition += Vector3.forward;
-			NetworkMessageManager.Instance.SendPosition(rb.position + movPosition, (uint)objectID);
-			//inputs.Add(sequence++, rb.velocity);
+			movPosition += Vector3.forward * speed * Time.fixedDeltaTime;
+			NetworkMessageManager.Instance.SendVelocity(movPosition, (uint)objectID, sequence);
+
+			Vector3 positionRequest = rb.position + movPosition;
+			Debug.Log("Saving position request for " + positionRequest + " with ID " + sequence);
+			inputs.Add(sequence++, movPosition);
 		}
 		rb.position += movPosition;
-
-		//Debug.Log("Sending packet from " + gameObject.name);
-		//NetworkMessageManager.Instance.SendVelocity(rb.velocity, (uint)objectID);
 	}
 }

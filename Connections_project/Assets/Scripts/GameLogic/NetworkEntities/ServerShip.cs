@@ -13,7 +13,7 @@ public class ServerShip : NetworkEntity
 
 	protected override void OnReceiveDataEvent(uint packetID, ushort packetTypeID, Stream stream)
 	{
-		Debug.Log("Applying velocity received to " + gameObject.name);
+		//Debug.Log("Applying velocity received to " + gameObject.name);
 
 		switch (packetTypeID)
 		{
@@ -22,9 +22,9 @@ public class ServerShip : NetworkEntity
 				positionPacket.Deserialize(stream);
 
 				Vector3 position = new Vector3(
-					positionPacket.payload.x,
-					positionPacket.payload.y,
-					positionPacket.payload.z
+					positionPacket.payload.position.x,
+					positionPacket.payload.position.y,
+					positionPacket.payload.position.z
 				);
 				rb.position = position;
 				break;

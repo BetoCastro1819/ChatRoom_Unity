@@ -1,7 +1,13 @@
 ﻿using System.IO;
 using UnityEngine;
 
-public class PositionPacket : UserPacket<Vector3>
+public struct PositionPacketData
+{
+	public uint sequence;
+	public Vector3 position;
+}
+
+public class PositionPacket : UserPacket<PositionPacketData>
 {
 	public PositionPacket() : base((ushort)UserPacketType.Position) { }
 
@@ -9,19 +15,19 @@ public class PositionPacket : UserPacket<Vector3>
 	{
 		BinaryWriter binaryWriter = new BinaryWriter(stream);
 
-		//binaryWriter.Write(payload.enitityID);
-		binaryWriter.Write(payload.x);
-		binaryWriter.Write(payload.y);
-		binaryWriter.Write(payload.z);
+		binaryWriter.Write(payload.sequence);
+		binaryWriter.Write(payload.position.x);
+		binaryWriter.Write(payload.position.y);
+		binaryWriter.Write(payload.position.z);
 	}
 
 	protected override void OnDeserialize(Stream stream)
 	{
 		BinaryReader binaryReader = new BinaryReader(stream);
 
-		//payload.enitityID = binaryReader.ReadUInt16();
-		payload.x = binaryReader.ReadSingle();
-		payload.y = binaryReader.ReadSingle();
-		payload.z = binaryReader.ReadSingle();
+		payload.sequence = binaryReader.ReadUInt32();
+		payload.position.x = binaryReader.ReadSingle();
+		payload.position.y = binaryReader.ReadSingle();
+		payload.position.z = binaryReader.ReadSingle();
 	}
 }
