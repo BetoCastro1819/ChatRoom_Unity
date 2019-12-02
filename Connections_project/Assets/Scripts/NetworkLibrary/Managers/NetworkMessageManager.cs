@@ -34,6 +34,12 @@ public class NetworkMessageManager : MonoBehaviourSingleton<NetworkMessageManage
 		SendPacket(positionPacket, objectID);
 	}
 
+	public void SendShootPacket(uint objectID, bool isReliable = false)
+	{
+		ShootPacket shootPacket = new ShootPacket();
+		SendPacket(shootPacket, objectID, isReliable);
+	}
+
 	private void SendPacket<T>(NetworkPacket<T> packet, uint objectID,  bool isReliable = false)
 	{
 		if (isReliable)

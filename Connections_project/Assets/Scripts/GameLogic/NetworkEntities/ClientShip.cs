@@ -69,6 +69,10 @@ public class ClientShip : NetworkEntity
 					StartCoroutine(SendServerResponseWithLag(rb.position, positionPacket.payload.sequence));
 
 				break;
+
+			case (ushort)UserPacketType.Shoot:
+				Shoot();
+				break;
 		}
 	}
 
@@ -78,10 +82,22 @@ public class ClientShip : NetworkEntity
 		NetworkMessageManager.Instance.SendPosition(position, (uint)objectID, sequence);
 	} 
 
+	void Update()
+	{
+		if (health <= 0) Destroy(gameObject);
+	}
+
     void FixedUpdate()
     {
 		if (NetworkManager.Instance.isServer) return;
-		
+
+		HandleMovementInput();
+		HandleShootInput();
+	}
+
+	void HandleMovementInput()
+	{
+
 		float horizontal = Input.GetAxisRaw("Horizontal");
 		float vertical = Input.GetAxisRaw("Vertical");
 
@@ -89,10 +105,10 @@ public class ClientShip : NetworkEntity
 		Vector3 movPosition = Vector3.zero;
 		if (Input.GetKey(KeyCode.LeftArrow))
 		{
-			movPosition += -Vector3.right * speed  * Time.fixedDeltaTime;
+			movPosition += -Vector3.right * speed * Time.fixedDeltaTime;
 			NetworkMessageManager.Instance.SendVelocity(movPosition, (uint)objectID, sequence);
 
-			Vector3 positionRequest = rb.position + movPosition; 
+			Vector3 positionRequest = rb.position + movPosition;
 			//Debug.Log("Saving position request for " + positionRequest + " with ID " + sequence);
 			inputs.Add(sequence++, movPosition);
 		}
@@ -103,7 +119,7 @@ public class ClientShip : NetworkEntity
 
 			Vector3 positionRequest = rb.position + movPosition;
 			//Debug.Log("Saving position request for " + positionRequest + " with ID " + sequence);
-			inputs.Add(sequence++, movPosition);		
+			inputs.Add(sequence++, movPosition);
 		}
 		else if (Input.GetKey(KeyCode.DownArrow))
 		{
@@ -124,5 +140,33 @@ public class ClientShip : NetworkEntity
 			inputs.Add(sequence++, movPosition);
 		}
 		rb.position += movPosition;
+	}
+
+	void HandleShootInput()
+	{
+		if (Input.GetKeyDown(KeyCode.Space))
+		{
+			Shoot();
+			NetworkMessageManager.Instance.SendShootPacket((uint)objectID);
+		}
+	}
+
+	void Shoot()
+	{
+		Instantiate(bulletPrefab, shootPosition.position, shootPosition.rotation);
+	}
+
+	void OnCollisionEnter(Collision other) 
+	{
+		if (other.collider.CompareTag("Bullet"))
+		{
+			Bullet bullet = other.gameObject.GetComponent<Bullet>();
+			TakeDamage(bullet.damage);	
+		}
+	}
+
+	void TakeDamage(int damage)
+	{
+		health -= damage;
 	}
 }

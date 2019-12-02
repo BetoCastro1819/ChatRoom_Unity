@@ -28,21 +28,62 @@ public class ServerShip : NetworkEntity
 				);
 				rb.position = position;
 				break;
+
+			case (ushort)UserPacketType.Shoot:
+				Shoot();
+				break;
 		}
+	}
+
+	void Update()
+	{
+		if (health <= 0) Destroy(gameObject);
 	}
 
     void FixedUpdate()
     {
 		if (!NetworkManager.Instance.isServer) return;
 
+		HandleMovementInput();
+		HandleShootInput();
+	}
+
+	void HandleMovementInput()
+	{
 		float horizontal = Input.GetAxisRaw("Horizontal");
 		float vertical = Input.GetAxisRaw("Vertical");
 
 		Vector3 velocity = new Vector3(-horizontal, 0, -vertical);
 		rb.position += velocity * speed * Time.fixedDeltaTime;
 
-		//Debug.Log("Sending packet from " + gameObject.name);
-		//NetworkMessageManager.Instance.SendVelocity(velocity * speed, (uint)objectID);
 		NetworkMessageManager.Instance.SendPosition(rb.position, (uint)objectID);
+	}
+
+	void HandleShootInput()
+	{
+		if (Input.GetKeyDown(KeyCode.Space))
+		{
+			Shoot();
+			NetworkMessageManager.Instance.SendShootPacket((uint)objectID);
+		}
+	}
+
+	void Shoot()
+	{
+		Instantiate(bulletPrefab, shootPosition.position, shootPosition.rotation);
+	}
+
+	void OnCollisionEnter(Collision other)
+	{
+		if (other.collider.CompareTag("Bullet"))
+		{
+			Bullet bullet = other.gameObject.GetComponent<Bullet>();
+			TakeDamage(bullet.damage);
+		}
+	}
+
+	void TakeDamage(int damage)
+	{
+		health -= damage;
 	}
 }

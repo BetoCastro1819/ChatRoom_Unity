@@ -2,12 +2,18 @@
 
 public class GameManager : MonoBehaviour
 {
+	[SerializeField] GameObject gameOverCanvas;
+
 	[SerializeField] Transform serverCameraPosition;
 	[SerializeField] Transform clientCameraPosition;
+
+	[SerializeField] GameObject serverShip;
+	[SerializeField] GameObject clientShip;
 
     void Start()
     {
 		NetworkScreen.Instance.OnGameScreenEvent += SetupCamera;
+		gameOverCanvas.SetActive(false);
 	}
 
 	void SetupCamera()
@@ -23,6 +29,14 @@ public class GameManager : MonoBehaviour
 		{
 			mainCamera.transform.position = clientCameraPosition.position;
 			mainCamera.transform.rotation = clientCameraPosition.rotation;
+		}
+	}
+
+	void Update()
+	{
+		if (serverShip == null || clientShip == null)
+		{
+			gameOverCanvas.SetActive(true);
 		}
 	}
 }

@@ -272,4 +272,9 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
                 connection.Send(data, iterator.Current.Value.ipEndPoint);
         }
     }
+
+	public void CloseConnection()
+	{
+		connection.Close();
+	}
 }

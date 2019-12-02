@@ -10,6 +10,9 @@ public enum ObjectIDs
 public abstract class NetworkEntity : MonoBehaviour
 {
 	[SerializeField] protected float speed = 10;
+	[SerializeField] protected GameObject bulletPrefab;
+	[SerializeField] protected Transform shootPosition;
+	[SerializeField] protected int health;
 
 	protected ObjectIDs objectID;
 
