@@ -37,6 +37,22 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 		if (serverShip == null || clientShip == null)
 		{
 			gameOverCanvas.SetActive(true);
+			GameOverUI gameOverUI = gameOverCanvas.GetComponent<GameOverUI>();
+
+			if (serverShip == null)
+			{
+				if (NetworkManager.Instance.isServer)
+					gameOverUI.youLost.SetActive(true);
+				else
+					gameOverUI.youWon.SetActive(true);
+			} 
+			else
+			{
+				if (NetworkManager.Instance.isServer)
+					gameOverUI.youWon.SetActive(true);
+				else
+					gameOverUI.youLost.SetActive(true);
+			}
 		}
 	}
 }
