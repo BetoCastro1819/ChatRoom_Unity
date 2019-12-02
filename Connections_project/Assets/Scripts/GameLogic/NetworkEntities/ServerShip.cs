@@ -35,11 +35,11 @@ public class ServerShip : NetworkEntity
     {
 		if (!NetworkManager.Instance.isServer) return;
 
-		float horizontal = Input.GetAxis("Horizontal");
-		float vertical = Input.GetAxis("Vertical");
+		float horizontal = Input.GetAxisRaw("Horizontal");
+		float vertical = Input.GetAxisRaw("Vertical");
 
-		Vector3 velocity = new Vector3(horizontal, 0, vertical);
-		rb.velocity = velocity * speed;
+		Vector3 velocity = new Vector3(-horizontal, 0, -vertical);
+		rb.position += velocity * speed * Time.fixedDeltaTime;
 
 		//Debug.Log("Sending packet from " + gameObject.name);
 		//NetworkMessageManager.Instance.SendVelocity(velocity * speed, (uint)objectID);

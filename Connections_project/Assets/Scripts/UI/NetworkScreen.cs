@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System;
 using UnityEngine;
 using UnityEngine.UI;
 using System.Net;
@@ -13,6 +12,8 @@ public class NetworkScreen : MonoBehaviourSingleton<NetworkScreen>
     public Button startServerBtn;
     public InputField portInputField;
     public InputField addressInputField;
+
+	public event Action OnGameScreenEvent;
 
     protected override void Initialize()
     {
@@ -42,6 +43,9 @@ public class NetworkScreen : MonoBehaviourSingleton<NetworkScreen>
     void SwitchToChatScreen()
     {
         //ChatScreen.Instance.gameObject.SetActive(true);
+
+		OnGameScreenEvent();
+
 		networkEntity_server.SetActive(true);
 		networkEntity_client.SetActive(true);
 
