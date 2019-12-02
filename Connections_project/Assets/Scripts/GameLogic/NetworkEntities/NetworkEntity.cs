@@ -24,4 +24,6 @@ public abstract class NetworkEntity : MonoBehaviour
     }
 
     protected abstract void OnReceiveDataEvent(uint packetID, ushort packetTypeID, Stream stream);
+
+	public int GetHealth() { return health; }
 }

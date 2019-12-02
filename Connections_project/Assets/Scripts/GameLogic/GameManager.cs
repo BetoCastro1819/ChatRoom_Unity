@@ -1,14 +1,14 @@
 ﻿using UnityEngine;
 
-public class GameManager : MonoBehaviour
+public class GameManager : MonoBehaviourSingleton<GameManager>
 {
 	[SerializeField] GameObject gameOverCanvas;
 
 	[SerializeField] Transform serverCameraPosition;
 	[SerializeField] Transform clientCameraPosition;
 
-	[SerializeField] GameObject serverShip;
-	[SerializeField] GameObject clientShip;
+	public ServerShip serverShip;
+	public ClientShip clientShip;
 
     void Start()
     {
