@@ -10,14 +10,14 @@ public class NetworkMessageManager : MonoBehaviourSingleton<NetworkMessageManage
 		SendPacket(textPacket, objectID);
     }
 
-	public void SendVelocity(ushort entityID, Vector3 velocity, uint objectID, bool sendAsReliable = false)
+	public void SendVelocity(Vector3 velocity, uint objectID, bool sendAsReliable = false)
 	{
 		VelocityPacket velocityPacket = new VelocityPacket();
 
-		velocityPacket.payload.enitityID = entityID;
-		velocityPacket.payload.velocity.x = velocity.x;
-		velocityPacket.payload.velocity.y = velocity.y;
-		velocityPacket.payload.velocity.z = velocity.z;
+		//velocityPacket.payload.enitityID = entityID;
+		velocityPacket.payload.x = velocity.x;
+		velocityPacket.payload.y = velocity.y;
+		velocityPacket.payload.z = velocity.z;
 		
 		SendPacket(velocityPacket, objectID);
 	}

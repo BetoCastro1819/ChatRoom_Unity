@@ -52,7 +52,11 @@ public class PacketManager : MonoBehaviourSingleton<PacketManager>, IReceiveData
 	public void AddListener(uint listenerID, Action<uint, ushort, Stream> callback)
 	{
 		if (!onPacketReceived.ContainsKey(listenerID))
+		{
+			Debug.Log("Added listener with ID " + listenerID);
+			
 			onPacketReceived.Add(listenerID, callback);
+		}
 	}
 
 	public void RemoveListener(uint listenerID)
