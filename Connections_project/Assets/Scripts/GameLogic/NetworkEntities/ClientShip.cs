@@ -8,6 +8,8 @@ public class ClientShip : NetworkEntity
 	[SerializeField] float simulatedLagInMs = 0.2f;
 
 	Dictionary<uint, Vector3> inputs = new Dictionary<uint, Vector3>();
+
+	uint lastSequenceServerReceived = 0;
 	uint sequence = 0;
 
     protected override void Start()
@@ -35,7 +37,7 @@ public class ClientShip : NetworkEntity
 				);
 				//rb.position += velocityReceived;
 
-				transform.Translate(velocityReceived);
+				transform.Translate(velocityReceived, Space.Self);
 
 				if (NetworkManager.Instance.isServer)
 					NetworkMessageManager.Instance.SendPosition(transform.position, (uint)objectID, velocityPacket.payload.sequence);
@@ -54,21 +56,23 @@ public class ClientShip : NetworkEntity
 				//rb.position = position;
 				//Debug.Log("Position before reconciliation: " + position);
 
-				//transform.position = position;
 
-				Vector3 reconciliationPosition = Vector3.zero;
-				for (uint currentInputKey = positionPacket.payload.sequence; currentInputKey < sequence; currentInputKey++)
+				if (positionPacket.payload.sequence > lastSequenceServerReceived)
 				{
-					if (inputs.ContainsKey(currentInputKey))
+					lastSequenceServerReceived = positionPacket.payload.sequence;
+
+					Vector3 reconciliationPosition = Vector3.zero;
+					for (uint currentInputKey = positionPacket.payload.sequence; currentInputKey < sequence; currentInputKey++)
 					{
-						//Debug.Log("Removing input with ID " + currentInputKey);
-						reconciliationPosition += inputs[currentInputKey];
-						inputs.Remove(positionPacket.payload.sequence);
+						if (inputs.ContainsKey(currentInputKey))
+						{
+							//Debug.Log("Removing input with ID " + currentInputKey);
+							reconciliationPosition += inputs[currentInputKey];
+							inputs.Remove(positionPacket.payload.sequence);
+						}
 					}
+					transform.position = position;
 				}
-				//rb.position += reconciliationPosition;
-				//transform.position += reconciliationPosition;
-				//Debug.Log("Position after reconciliation: " + rb.position);
 
 				if (NetworkManager.Instance.isServer)
 				{
@@ -112,7 +116,7 @@ public class ClientShip : NetworkEntity
 		Vector3 movPosition = Vector3.zero;
 		if (Input.GetKey(KeyCode.LeftArrow))
 		{
-			movPosition += -Vector3.right * speed * Time.fixedDeltaTime;
+			movPosition += -transform.right * speed * Time.fixedDeltaTime;
 			NetworkMessageManager.Instance.SendVelocity(movPosition, (uint)objectID, sequence);
 
 			//Vector3 positionRequest = rb.position + movPosition;
@@ -121,7 +125,7 @@ public class ClientShip : NetworkEntity
 		}
 		else if (Input.GetKey(KeyCode.RightArrow))
 		{
-			movPosition += Vector3.right * speed * Time.fixedDeltaTime;
+			movPosition += transform.right * speed * Time.fixedDeltaTime;
 			NetworkMessageManager.Instance.SendVelocity(movPosition, (uint)objectID, sequence);
 
 			//Vector3 positionRequest = rb.position + movPosition;
@@ -130,7 +134,7 @@ public class ClientShip : NetworkEntity
 		}
 		else if (Input.GetKey(KeyCode.DownArrow))
 		{
-			movPosition += -Vector3.forward * speed * Time.fixedDeltaTime;
+			movPosition += -transform.forward * speed * Time.fixedDeltaTime;
 			NetworkMessageManager.Instance.SendVelocity(movPosition, (uint)objectID, sequence);
 
 			//Vector3 positionRequest = rb.position + movPosition;
@@ -139,15 +143,14 @@ public class ClientShip : NetworkEntity
 		}
 		else if (Input.GetKey(KeyCode.UpArrow))
 		{
-			movPosition += Vector3.forward * speed * Time.fixedDeltaTime;
+			movPosition += transform.forward * speed * Time.fixedDeltaTime;
 			NetworkMessageManager.Instance.SendVelocity(movPosition, (uint)objectID, sequence);
 
 			//Vector3 positionRequest = rb.position + movPosition;
 			//Debug.Log("Saving position request for " + positionRequest + " with ID " + sequence);
 			inputs.Add(sequence++, movPosition);
 		}
-		transform.position += movPosition;
-		//rb.position += movPosition;
+		transform.Translate(movPosition, Space.Self);
 	}
 
 	void HandleShootInput()

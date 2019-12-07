@@ -30,7 +30,7 @@ public class ServerShip : NetworkEntity
 				);
 				//rb.position += velocityReceived;
 
-				transform.Translate(velocityReceived);
+				transform.Translate(velocityReceived, Space.Self);
 
 				if (NetworkManager.Instance.isServer)
 					NetworkMessageManager.Instance.SendPosition(transform.position, (uint)objectID);
@@ -78,26 +78,27 @@ public class ServerShip : NetworkEntity
 		Vector3 movPosition = Vector3.zero;
 		if (Input.GetKey(KeyCode.LeftArrow))
 		{
-			movPosition += Vector3.right * speed * Time.fixedDeltaTime;
+			movPosition += transform.right * speed * Time.fixedDeltaTime;
 			NetworkMessageManager.Instance.SendVelocity(movPosition, (uint)objectID);
 		}
 		else if (Input.GetKey(KeyCode.RightArrow))
 		{
-			movPosition += -Vector3.right * speed * Time.fixedDeltaTime;
+			movPosition += -transform.right * speed * Time.fixedDeltaTime;
 			NetworkMessageManager.Instance.SendVelocity(movPosition, (uint)objectID);
 		}
 		else if (Input.GetKey(KeyCode.DownArrow))
 		{
-			movPosition += Vector3.forward * speed * Time.fixedDeltaTime;
+			movPosition += transform.forward * speed * Time.fixedDeltaTime;
 			NetworkMessageManager.Instance.SendVelocity(movPosition, (uint)objectID);
 		}
 		else if (Input.GetKey(KeyCode.UpArrow))
 		{
-			movPosition += -Vector3.forward * speed * Time.fixedDeltaTime;
+			movPosition += -transform.forward * speed * Time.fixedDeltaTime;
 			NetworkMessageManager.Instance.SendVelocity(movPosition, (uint)objectID);
 		}
 		//rb.position += movPosition;
-		transform.position += movPosition;
+		//transform.position += movPosition;
+		transform.Translate(movPosition, Space.Self);
 	}
 
 	void HandleShootInput()
