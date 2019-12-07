@@ -5,7 +5,9 @@ public enum UserPacketType
 	Text_Message,
 	Velocity,
 	Position,
-	Shoot
+	Shoot,
+	Damage,
+	ShipDestroyed
 }
 
 public class UserPacketHeader : ISerialzablePacket

@@ -1,13 +1,15 @@
-﻿using UnityEngine;
+﻿using System.IO;
+using UnityEngine;
 
 public class Bullet : MonoBehaviour
 {
-	[SerializeField] float speed;
+	public float speed = 10f;
 	public int damage;
 
     void FixedUpdate()
     {
-		transform.position += transform.forward * speed * Time.fixedDeltaTime;
+		Vector3 velocity = transform.forward * speed * Time.fixedDeltaTime;
+		transform.position += velocity;
     }
 
 	private void OnCollisionEnter(Collision other) 

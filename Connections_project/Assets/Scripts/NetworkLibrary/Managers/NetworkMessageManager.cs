@@ -2,6 +2,20 @@
 
 public class NetworkMessageManager : MonoBehaviourSingleton<NetworkMessageManager>
 {
+	public void SendShipdestroyedPacket(uint objectID, bool sendAsReliable = false)
+	{
+		ShipDestroyedPacket shipDestroyedPacket = new ShipDestroyedPacket();
+		SendPacket(shipDestroyedPacket, objectID);
+	}
+
+	public void SendDamagePacket(uint damage, uint objectID, bool sendAsReliable = false)
+	{
+		DamagePacket damagePacket = new DamagePacket();
+		damagePacket.payload.damage = damage;
+
+		SendPacket(damagePacket, objectID);
+	}
+
     public void SendTextMessage(string message, uint objectID, bool sendAsReliable = false)
     {
         TextPacket textPacket = new TextPacket();

@@ -85,6 +85,22 @@ public class ClientShip : NetworkEntity
 			case (ushort)UserPacketType.Shoot:
 				Shoot();
 				break;
+
+			case (ushort)UserPacketType.Damage:
+				DamagePacket damagePacket = new DamagePacket();
+				damagePacket.Deserialize(stream);
+
+				TakeDamage((int)damagePacket.payload.damage);
+
+				break;
+
+			case (ushort)UserPacketType.ShipDestroyed:
+
+				if (NetworkManager.Instance.isServer)
+					NetworkMessageManager.Instance.SendShipdestroyedPacket((uint)objectID);
+
+				Destroy(gameObject);
+				break;
 		}
 	}
 
@@ -96,7 +112,11 @@ public class ClientShip : NetworkEntity
 
 	void Update()
 	{
-		if (health <= 0) Destroy(gameObject);
+		if (health <= 0)
+		{
+			NetworkMessageManager.Instance.SendShipdestroyedPacket((uint)objectID);
+			//Destroy(gameObject);
+		} 
 	}
 
     void FixedUpdate()
@@ -172,7 +192,10 @@ public class ClientShip : NetworkEntity
 		if (other.collider.CompareTag("Bullet"))
 		{
 			Bullet bullet = other.gameObject.GetComponent<Bullet>();
-			TakeDamage(bullet.damage);	
+
+			NetworkMessageManager.Instance.SendDamagePacket((uint)bullet.damage, (uint)objectID);
+
+			//TakeDamage(bullet.damage);	
 		}
 	}
 
