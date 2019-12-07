@@ -17,6 +17,26 @@ public class ServerShip : NetworkEntity
 
 		switch (packetTypeID)
 		{
+			case (ushort)UserPacketType.Velocity:
+
+				VelocityPacket velocityPacket = new VelocityPacket();
+				velocityPacket.Deserialize(stream);
+
+				//Debug.Log("Applying velocity received to " + gameObject.name);
+				Vector3 velocityReceived = new Vector3(
+					velocityPacket.payload.velocity.x,
+					velocityPacket.payload.velocity.y,
+					velocityPacket.payload.velocity.z
+				);
+				//rb.position += velocityReceived;
+
+				transform.Translate(velocityReceived);
+
+				if (NetworkManager.Instance.isServer)
+					NetworkMessageManager.Instance.SendPosition(transform.position, (uint)objectID);
+
+				break;
+
 			case (ushort)UserPacketType.Position:
 				PositionPacket positionPacket = new PositionPacket();
 				positionPacket.Deserialize(stream);
@@ -26,7 +46,9 @@ public class ServerShip : NetworkEntity
 					positionPacket.payload.position.y,
 					positionPacket.payload.position.z
 				);
-				rb.position = position;
+				//rb.position = position;
+				transform.position = position;
+
 				break;
 
 			case (ushort)UserPacketType.Shoot:
@@ -53,10 +75,29 @@ public class ServerShip : NetworkEntity
 		float horizontal = Input.GetAxisRaw("Horizontal");
 		float vertical = Input.GetAxisRaw("Vertical");
 
-		Vector3 velocity = new Vector3(-horizontal, 0, -vertical);
-		rb.position += velocity * speed * Time.fixedDeltaTime;
-
-		NetworkMessageManager.Instance.SendPosition(rb.position, (uint)objectID);
+		Vector3 movPosition = Vector3.zero;
+		if (Input.GetKey(KeyCode.LeftArrow))
+		{
+			movPosition += Vector3.right * speed * Time.fixedDeltaTime;
+			NetworkMessageManager.Instance.SendVelocity(movPosition, (uint)objectID);
+		}
+		else if (Input.GetKey(KeyCode.RightArrow))
+		{
+			movPosition += -Vector3.right * speed * Time.fixedDeltaTime;
+			NetworkMessageManager.Instance.SendVelocity(movPosition, (uint)objectID);
+		}
+		else if (Input.GetKey(KeyCode.DownArrow))
+		{
+			movPosition += Vector3.forward * speed * Time.fixedDeltaTime;
+			NetworkMessageManager.Instance.SendVelocity(movPosition, (uint)objectID);
+		}
+		else if (Input.GetKey(KeyCode.UpArrow))
+		{
+			movPosition += -Vector3.forward * speed * Time.fixedDeltaTime;
+			NetworkMessageManager.Instance.SendVelocity(movPosition, (uint)objectID);
+		}
+		//rb.position += movPosition;
+		transform.position += movPosition;
 	}
 
 	void HandleShootInput()

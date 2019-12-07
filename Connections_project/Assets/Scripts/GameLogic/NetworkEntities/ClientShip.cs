@@ -33,10 +33,12 @@ public class ClientShip : NetworkEntity
 					velocityPacket.payload.velocity.y,
 					velocityPacket.payload.velocity.z
 				);
-				rb.position += velocityReceived;
+				//rb.position += velocityReceived;
+
+				transform.Translate(velocityReceived);
 
 				if (NetworkManager.Instance.isServer)
-					NetworkMessageManager.Instance.SendPosition(rb.position, (uint)objectID, velocityPacket.payload.sequence);
+					NetworkMessageManager.Instance.SendPosition(transform.position, (uint)objectID, velocityPacket.payload.sequence);
 
 				break;
 
@@ -49,24 +51,30 @@ public class ClientShip : NetworkEntity
 					positionPacket.payload.position.y,
 					positionPacket.payload.position.z
 				);
-				rb.position = position;
+				//rb.position = position;
 				//Debug.Log("Position before reconciliation: " + position);
 
+				//transform.position = position;
+
 				Vector3 reconciliationPosition = Vector3.zero;
-				inputs.Remove(positionPacket.payload.sequence);
 				for (uint currentInputKey = positionPacket.payload.sequence; currentInputKey < sequence; currentInputKey++)
 				{
 					if (inputs.ContainsKey(currentInputKey))
 					{
 						//Debug.Log("Removing input with ID " + currentInputKey);
 						reconciliationPosition += inputs[currentInputKey];
+						inputs.Remove(positionPacket.payload.sequence);
 					}
 				}
-				rb.position += reconciliationPosition;
+				//rb.position += reconciliationPosition;
+				//transform.position += reconciliationPosition;
 				//Debug.Log("Position after reconciliation: " + rb.position);
 
 				if (NetworkManager.Instance.isServer)
-					StartCoroutine(SendServerResponseWithLag(rb.position, positionPacket.payload.sequence));
+				{
+					//NetworkMessageManager.Instance.SendPosition(transform.position, (uint)objectID, sequence);
+					//StartCoroutine(SendServerResponseWithLag(transform.position, positionPacket.payload.sequence));
+				}
 
 				break;
 
@@ -101,14 +109,13 @@ public class ClientShip : NetworkEntity
 		float horizontal = Input.GetAxisRaw("Horizontal");
 		float vertical = Input.GetAxisRaw("Vertical");
 
-
 		Vector3 movPosition = Vector3.zero;
 		if (Input.GetKey(KeyCode.LeftArrow))
 		{
 			movPosition += -Vector3.right * speed * Time.fixedDeltaTime;
 			NetworkMessageManager.Instance.SendVelocity(movPosition, (uint)objectID, sequence);
 
-			Vector3 positionRequest = rb.position + movPosition;
+			//Vector3 positionRequest = rb.position + movPosition;
 			//Debug.Log("Saving position request for " + positionRequest + " with ID " + sequence);
 			inputs.Add(sequence++, movPosition);
 		}
@@ -117,7 +124,7 @@ public class ClientShip : NetworkEntity
 			movPosition += Vector3.right * speed * Time.fixedDeltaTime;
 			NetworkMessageManager.Instance.SendVelocity(movPosition, (uint)objectID, sequence);
 
-			Vector3 positionRequest = rb.position + movPosition;
+			//Vector3 positionRequest = rb.position + movPosition;
 			//Debug.Log("Saving position request for " + positionRequest + " with ID " + sequence);
 			inputs.Add(sequence++, movPosition);
 		}
@@ -126,7 +133,7 @@ public class ClientShip : NetworkEntity
 			movPosition += -Vector3.forward * speed * Time.fixedDeltaTime;
 			NetworkMessageManager.Instance.SendVelocity(movPosition, (uint)objectID, sequence);
 
-			Vector3 positionRequest = rb.position + movPosition;
+			//Vector3 positionRequest = rb.position + movPosition;
 			//Debug.Log("Saving position request for " + positionRequest + " with ID " + sequence);
 			inputs.Add(sequence++, movPosition);
 		}
@@ -135,11 +142,12 @@ public class ClientShip : NetworkEntity
 			movPosition += Vector3.forward * speed * Time.fixedDeltaTime;
 			NetworkMessageManager.Instance.SendVelocity(movPosition, (uint)objectID, sequence);
 
-			Vector3 positionRequest = rb.position + movPosition;
+			//Vector3 positionRequest = rb.position + movPosition;
 			//Debug.Log("Saving position request for " + positionRequest + " with ID " + sequence);
 			inputs.Add(sequence++, movPosition);
 		}
-		rb.position += movPosition;
+		transform.position += movPosition;
+		//rb.position += movPosition;
 	}
 
 	void HandleShootInput()
