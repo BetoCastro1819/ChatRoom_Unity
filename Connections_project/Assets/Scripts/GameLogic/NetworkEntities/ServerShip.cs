@@ -3,6 +3,8 @@ using UnityEngine;
 
 public class ServerShip : NetworkEntity
 {
+	[SerializeField] GameObject explosionEffect;
+
 	protected override void Start()
 	{
 		base.Start();
@@ -63,10 +65,7 @@ public class ServerShip : NetworkEntity
 				break;
 
 			case (ushort)UserPacketType.ShipDestroyed:
-
-				//if (NetworkManager.Instance.isServer)
-				//	NetworkMessageManager.Instance.SendShipdestroyedPacket((uint)objectID);
-
+				Instantiate(explosionEffect, transform.position, Quaternion.identity);
 				Destroy(gameObject);
 				break;
 		}
@@ -79,6 +78,7 @@ public class ServerShip : NetworkEntity
 		if (health <= 0) 
 		{
 			NetworkMessageManager.Instance.SendShipdestroyedPacket((uint)objectID);
+			Instantiate(explosionEffect, transform.position, Quaternion.identity);
 			Destroy(gameObject);
 		}
 	}

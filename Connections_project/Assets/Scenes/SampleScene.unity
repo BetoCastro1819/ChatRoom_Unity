@@ -359,7 +359,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &124582375
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4851,6 +4851,8 @@ MonoBehaviour:
     type: 3}
   shootPosition: {fileID: 1594825703}
   health: 100
+  explosionEffect: {fileID: 4524227111070866231, guid: 2e42e4a424c09be4daa4a60be4149f3f,
+    type: 3}
   simulatedLagInMs: 0.2
 --- !u!23 &442555643915618438
 MeshRenderer:
@@ -4982,6 +4984,8 @@ MonoBehaviour:
     type: 3}
   shootPosition: {fileID: 1211942248}
   health: 100
+  explosionEffect: {fileID: 4524227111070866231, guid: 2e42e4a424c09be4daa4a60be4149f3f,
+    type: 3}
 --- !u!33 &5052933103911164460
 MeshFilter:
   m_ObjectHideFlags: 0

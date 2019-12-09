@@ -3,6 +3,8 @@ using UnityEngine;
 
 public class Bullet : MonoBehaviour
 {
+	[SerializeField] GameObject explosionEffect;
+
 	public float speed = 10f;
 	public int damage;
 
@@ -14,6 +16,7 @@ public class Bullet : MonoBehaviour
 
 	private void OnCollisionEnter(Collision other) 
 	{
+		Instantiate(explosionEffect, transform.position, Quaternion.identity);
 		Destroy(gameObject);	
 	}
 }

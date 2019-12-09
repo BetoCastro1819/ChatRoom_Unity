@@ -5,6 +5,7 @@ using UnityEngine;
 
 public class ClientShip : NetworkEntity
 {
+	[SerializeField] GameObject explosionEffect;
 	[SerializeField] float simulatedLagInMs = 0.2f;
 
 	Dictionary<uint, Vector3> inputs = new Dictionary<uint, Vector3>();
@@ -99,6 +100,7 @@ public class ClientShip : NetworkEntity
 				if (NetworkManager.Instance.isServer)
 					NetworkMessageManager.Instance.SendShipdestroyedPacket((uint)objectID);
 
+				Instantiate(explosionEffect, transform.position, Quaternion.identity);
 				Destroy(gameObject);
 				break;
 		}
