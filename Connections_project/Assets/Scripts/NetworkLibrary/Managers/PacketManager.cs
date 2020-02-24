@@ -17,11 +17,20 @@ public class PacketManager : MonoBehaviourSingleton<PacketManager>, IReceiveData
 	Queue<uint> sequenceNumbersReceived = new Queue<uint>();
 	const uint numberOfBitsInAck = 32;
 
+	List<ReliablePacketReceived> unorderedReceivedPackets = new List<ReliablePacketReceived>();
+
 	uint localSequence = 0;
 	uint remoteSequence = 0;
+	uint nextExpectedSequence = 0;
 	int ackBitfields = 0;
 
 	float packetRateTimer = 0;
+
+	struct ReliablePacketReceived
+	{
+		uint packetSequence;
+		byte[] packetData;
+	}
 
 	protected override void Initialize()
 	{
@@ -153,7 +162,6 @@ public class PacketManager : MonoBehaviourSingleton<PacketManager>, IReceiveData
 
 		if (isReliable)
 		{
-			//UnityEngine.Debug.Log("Adding packet to pending list: ID " + localSequence);
 			if (!packetsPendingToBeAcked.ContainsKey(localSequence))
 				packetsPendingToBeAcked.Add(localSequence, memoryStream.ToArray());
 		}
@@ -184,6 +192,14 @@ public class PacketManager : MonoBehaviourSingleton<PacketManager>, IReceiveData
 
 			ReliablePacketHeader reliablePacketHeader = new ReliablePacketHeader();
 			reliablePacketHeader.Deserialize(memoryStream);
+
+			Debug.Log("Next expected sequence: " + nextExpectedSequence);
+			Debug.Log("Sequence received: " + reliablePacketHeader.sequence);
+			if (reliablePacketHeader.sequence == nextExpectedSequence) 
+			{
+				nextExpectedSequence++;
+			}
+
 			ProcessReliablePacketReceived(reliablePacketHeader);
 
 			InvokeCallback(userPacketHeader, memoryStream);
@@ -202,11 +218,6 @@ public class PacketManager : MonoBehaviourSingleton<PacketManager>, IReceiveData
 			UnityEngine.Debug.Log("Packet lost simulation");
 			return;
 		}
-
-		//UnityEngine.Debug.Log("Reliable packet received");
-		//UnityEngine.Debug.Log("Remote sequence: ID " + remoteSequence);
-		//UnityEngine.Debug.Log("Sequence received: ID " + reliablePacketHeader.sequence);
-		//UnityEngine.Debug.Log("Latest packet that the other machine received: ID " + reliablePacketHeader.ack);
 
 		if (reliablePacketHeader.sequence > remoteSequence)
 			remoteSequence = reliablePacketHeader.sequence;

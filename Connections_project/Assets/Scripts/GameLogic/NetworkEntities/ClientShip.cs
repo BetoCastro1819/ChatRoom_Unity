@@ -140,36 +140,24 @@ public class ClientShip : NetworkEntity
 		{
 			movPosition += -transform.right * speed * Time.fixedDeltaTime;
 			NetworkMessageManager.Instance.SendVelocity(movPosition, (uint)objectID, sequence);
-
-			//Vector3 positionRequest = rb.position + movPosition;
-			//Debug.Log("Saving position request for " + positionRequest + " with ID " + sequence);
 			inputs.Add(sequence++, movPosition);
 		}
 		else if (Input.GetKey(KeyCode.RightArrow))
 		{
 			movPosition += transform.right * speed * Time.fixedDeltaTime;
 			NetworkMessageManager.Instance.SendVelocity(movPosition, (uint)objectID, sequence);
-
-			//Vector3 positionRequest = rb.position + movPosition;
-			//Debug.Log("Saving position request for " + positionRequest + " with ID " + sequence);
 			inputs.Add(sequence++, movPosition);
 		}
 		else if (Input.GetKey(KeyCode.DownArrow))
 		{
 			movPosition += -transform.forward * speed * Time.fixedDeltaTime;
 			NetworkMessageManager.Instance.SendVelocity(movPosition, (uint)objectID, sequence);
-
-			//Vector3 positionRequest = rb.position + movPosition;
-			//Debug.Log("Saving position request for " + positionRequest + " with ID " + sequence);
 			inputs.Add(sequence++, movPosition);
 		}
 		else if (Input.GetKey(KeyCode.UpArrow))
 		{
 			movPosition += transform.forward * speed * Time.fixedDeltaTime;
 			NetworkMessageManager.Instance.SendVelocity(movPosition, (uint)objectID, sequence);
-
-			//Vector3 positionRequest = rb.position + movPosition;
-			//Debug.Log("Saving position request for " + positionRequest + " with ID " + sequence);
 			inputs.Add(sequence++, movPosition);
 		}
 		transform.Translate(movPosition, Space.Self);

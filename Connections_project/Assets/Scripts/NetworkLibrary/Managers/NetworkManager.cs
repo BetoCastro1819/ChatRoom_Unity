@@ -48,7 +48,7 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
 	private ulong serverSalt;
 
     public uint clientID { get; private set; }
-    
+
 	protected override void Initialize()
 	{
 		enabled = false;
