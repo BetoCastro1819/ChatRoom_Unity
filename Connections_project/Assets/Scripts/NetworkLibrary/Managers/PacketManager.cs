@@ -195,17 +195,17 @@ public class PacketManager : MonoBehaviourSingleton<PacketManager>, IReceiveData
 			ReliablePacketHeader reliablePacketHeader = new ReliablePacketHeader();
 			reliablePacketHeader.Deserialize(memoryStream);
 
-			Debug.Log("Next expected sequence: " + nextExpectedSequence);
-			Debug.Log("Sequence received: " + reliablePacketHeader.sequence);
-			if (reliablePacketHeader.sequence == nextExpectedSequence) 
-			{
-				nextExpectedSequence++;
-				InvokeCallback(userPacketHeader, memoryStream);
-			}
-			else  // Packets are not coming in order
-			{
-				ProcessUnorderedPackets(reliablePacketHeader.sequence, packetWithCrc.data);
-			}
+			//Debug.Log("Next expected sequence: " + nextExpectedSequence);
+			//Debug.Log("Sequence received: " + reliablePacketHeader.sequence);
+			//if (reliablePacketHeader.sequence == nextExpectedSequence) 
+			//{
+			//	nextExpectedSequence++;
+			//}
+			//else  // Packets are not coming in order
+			//{
+			//	ProcessUnorderedPackets(reliablePacketHeader.sequence, packetWithCrc.data);
+			//}
+			InvokeCallback(userPacketHeader, memoryStream);
 			ProcessReliablePacketReceived(reliablePacketHeader);
 		}
 		else
