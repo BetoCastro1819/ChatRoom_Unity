@@ -4,7 +4,7 @@ using UnityEngine;
 public class ServerShip : NetworkEntity
 {
 	[SerializeField] GameObject explosionEffect;
-
+	
 	protected override void Start()
 	{
 		base.Start();
@@ -99,27 +99,28 @@ public class ServerShip : NetworkEntity
 		Vector3 movPosition = Vector3.zero;
 		if (Input.GetKey(KeyCode.LeftArrow))
 		{
-			movPosition += transform.right * speed * Time.fixedDeltaTime;
-			NetworkMessageManager.Instance.SendVelocity(movPosition, (uint)objectID);
+			movPosition += transform.right;
 		}
-		else if (Input.GetKey(KeyCode.RightArrow))
+		if (Input.GetKey(KeyCode.RightArrow))
 		{
-			movPosition += -transform.right * speed * Time.fixedDeltaTime;
-			NetworkMessageManager.Instance.SendVelocity(movPosition, (uint)objectID);
+			movPosition += -transform.right;
 		}
-		else if (Input.GetKey(KeyCode.DownArrow))
+		if (Input.GetKey(KeyCode.DownArrow))
 		{
-			movPosition += transform.forward * speed * Time.fixedDeltaTime;
-			NetworkMessageManager.Instance.SendVelocity(movPosition, (uint)objectID);
+			movPosition += transform.forward;
 		}
-		else if (Input.GetKey(KeyCode.UpArrow))
+		if (Input.GetKey(KeyCode.UpArrow))
 		{
-			movPosition += -transform.forward * speed * Time.fixedDeltaTime;
-			NetworkMessageManager.Instance.SendVelocity(movPosition, (uint)objectID);
+			movPosition += -transform.forward;
 		}
-		//rb.position += movPosition;
-		//transform.position += movPosition;
-		transform.Translate(movPosition, Space.Self);
+
+		if (movPosition != Vector3.zero)
+		{
+			movPosition = movPosition.normalized * speed * Time.fixedDeltaTime;
+
+			NetworkMessageManager.Instance.SendVelocity(movPosition, (uint)objectID);
+			transform.Translate(movPosition, Space.Self);
+		}
 	}
 
 	void HandleShootInput()

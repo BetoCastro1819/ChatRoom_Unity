@@ -21,8 +21,10 @@ public class PacketManager : MonoBehaviourSingleton<PacketManager>, IReceiveData
 
 	uint localSequence = 0;
 	uint remoteSequence = 0;
-	uint nextExpectedSequence = 0;
 	int ackBitfields = 0;
+
+	uint nextExpectedSequence = 0;
+	uint numberOfUnorderedPackets = 0; 
 
 	float packetRateTimer = 0;
 
@@ -198,17 +200,30 @@ public class PacketManager : MonoBehaviourSingleton<PacketManager>, IReceiveData
 			if (reliablePacketHeader.sequence == nextExpectedSequence) 
 			{
 				nextExpectedSequence++;
+				InvokeCallback(userPacketHeader, memoryStream);
 			}
-
+			else  // Packets are not coming in order
+			{
+				ProcessUnorderedPackets(reliablePacketHeader.sequence, packetWithCrc.data);
+			}
 			ProcessReliablePacketReceived(reliablePacketHeader);
-
-			InvokeCallback(userPacketHeader, memoryStream);
 		}
 		else
 		{
 			NetworkManager.Instance.OnReceivePacket(iPEndPoint, (PacketType)packetHeader.packetTypeID, memoryStream);
 		}
 		memoryStream.Close();
+	}
+
+	private void ProcessUnorderedPackets(uint packetSequence, byte[] packetData) 
+	{
+		if (packetSequence > nextExpectedSequence)
+		{
+			nextExpectedSequence = packetSequence + 1;
+			numberOfUnorderedPackets = packetSequence - remoteSequence;
+		}
+
+		// TODO: make system to sort and flush ordered packets
 	}
 
 	private void ProcessReliablePacketReceived(ReliablePacketHeader reliablePacketHeader)

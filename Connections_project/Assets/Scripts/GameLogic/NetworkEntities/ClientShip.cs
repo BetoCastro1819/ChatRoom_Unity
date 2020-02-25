@@ -138,29 +138,30 @@ public class ClientShip : NetworkEntity
 		Vector3 movPosition = Vector3.zero;
 		if (Input.GetKey(KeyCode.LeftArrow))
 		{
-			movPosition += -transform.right * speed * Time.fixedDeltaTime;
-			NetworkMessageManager.Instance.SendVelocity(movPosition, (uint)objectID, sequence);
-			inputs.Add(sequence++, movPosition);
+			movPosition += -transform.right;
 		}
-		else if (Input.GetKey(KeyCode.RightArrow))
+		if (Input.GetKey(KeyCode.RightArrow))
 		{
-			movPosition += transform.right * speed * Time.fixedDeltaTime;
-			NetworkMessageManager.Instance.SendVelocity(movPosition, (uint)objectID, sequence);
-			inputs.Add(sequence++, movPosition);
+			movPosition += transform.right;
 		}
-		else if (Input.GetKey(KeyCode.DownArrow))
+		if (Input.GetKey(KeyCode.DownArrow))
 		{
-			movPosition += -transform.forward * speed * Time.fixedDeltaTime;
-			NetworkMessageManager.Instance.SendVelocity(movPosition, (uint)objectID, sequence);
-			inputs.Add(sequence++, movPosition);
+			movPosition += -transform.forward;
 		}
-		else if (Input.GetKey(KeyCode.UpArrow))
+		if (Input.GetKey(KeyCode.UpArrow))
 		{
-			movPosition += transform.forward * speed * Time.fixedDeltaTime;
+			movPosition += transform.forward;
+		}
+
+		if (movPosition != Vector3.zero)
+		{
+			movPosition = movPosition.normalized * speed * Time.fixedDeltaTime;
+
 			NetworkMessageManager.Instance.SendVelocity(movPosition, (uint)objectID, sequence);
 			inputs.Add(sequence++, movPosition);
+
+			transform.Translate(movPosition, Space.Self);
 		}
-		transform.Translate(movPosition, Space.Self);
 	}
 
 	void HandleShootInput()
