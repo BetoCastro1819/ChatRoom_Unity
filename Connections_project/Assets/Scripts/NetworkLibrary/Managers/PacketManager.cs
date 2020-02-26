@@ -17,8 +17,6 @@ public class PacketManager : MonoBehaviourSingleton<PacketManager>, IReceiveData
 	Queue<uint> sequenceNumbersReceived = new Queue<uint>();
 	const uint numberOfBitsInAck = 32;
 
-	List<ReliablePacketReceived> unorderedReceivedPackets = new List<ReliablePacketReceived>();
-
 	uint localSequence = 0;
 	uint remoteSequence = 0;
 	int ackBitfields = 0;
@@ -41,11 +39,7 @@ public class PacketManager : MonoBehaviourSingleton<PacketManager>, IReceiveData
 		if ((packetRateTimer += Time.deltaTime) < resendPacketRate) return;
 		packetRateTimer = 0;
 
-		if (packetsPendingToBeAcked.Count <= 0) 
-		{
-			//Debug.Log("No packets pending to resend");
-			return;
-		}
+		if (packetsPendingToBeAcked.Count <= 0) return;
 
 		using (var pendingPacket = packetsPendingToBeAcked.GetEnumerator())
 		{

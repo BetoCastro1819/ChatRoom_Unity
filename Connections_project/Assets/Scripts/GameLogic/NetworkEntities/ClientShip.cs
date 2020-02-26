@@ -74,13 +74,6 @@ public class ClientShip : NetworkEntity
 					}
 					transform.position = position;
 				}
-
-				if (NetworkManager.Instance.isServer)
-				{
-					//NetworkMessageManager.Instance.SendPosition(transform.position, (uint)objectID, sequence);
-					//StartCoroutine(SendServerResponseWithLag(transform.position, positionPacket.payload.sequence));
-				}
-
 				break;
 
 			case (ushort)UserPacketType.Shoot:
@@ -157,9 +150,11 @@ public class ClientShip : NetworkEntity
 		{
 			movPosition = movPosition.normalized * speed * Time.fixedDeltaTime;
 
-			NetworkMessageManager.Instance.SendVelocity(movPosition, (uint)objectID, sequence);
-			inputs.Add(sequence++, movPosition);
-
+			if (Input.anyKey)
+			{
+				NetworkMessageManager.Instance.SendVelocity(movPosition, (uint)objectID, sequence);
+				inputs.Add(sequence++, movPosition);
+			}
 			transform.Translate(movPosition, Space.Self);
 		}
 	}

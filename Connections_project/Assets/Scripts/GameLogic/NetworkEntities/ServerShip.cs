@@ -118,7 +118,9 @@ public class ServerShip : NetworkEntity
 		{
 			movPosition = movPosition.normalized * speed * Time.fixedDeltaTime;
 
-			NetworkMessageManager.Instance.SendVelocity(movPosition, (uint)objectID);
+			if (Input.anyKey)
+				NetworkMessageManager.Instance.SendVelocity(movPosition, (uint)objectID);
+	
 			transform.Translate(movPosition, Space.Self);
 		}
 	}

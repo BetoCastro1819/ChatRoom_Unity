@@ -33,8 +33,7 @@ public class NetworkMessageManager : MonoBehaviourSingleton<NetworkMessageManage
 		velocityPacket.payload.velocity.y = velocity.y;
 		velocityPacket.payload.velocity.z = velocity.z;
 
-		//SendPacket(velocityPacket, objectID, isReliable: false);
-		SendPacket(velocityPacket, objectID, isReliable: true);
+		SendPacket(velocityPacket, objectID);
 	}
 
 	public void SendPosition(Vector3 position, uint objectID, uint sequence = 0, bool sendAsReliable = false)
